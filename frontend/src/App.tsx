@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 import { AnalyzerPage } from './pages/AnalyzerPage';
 import { HistoryPage } from './pages/HistoryPage';
@@ -27,12 +28,14 @@ export const App: React.FC = () => {
           <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
             <Navbar />
             <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<AnalyzerPage />} />
-                <Route path="/history" element={<HistoryPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
+              <ErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<AnalyzerPage />} />
+                  <Route path="/history" element={<HistoryPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </ErrorBoundary>
             </main>
             <Footer />
           </div>
