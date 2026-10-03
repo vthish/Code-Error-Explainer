@@ -40,8 +40,9 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
     setValidationError('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
     if (!errorText.trim()) {
       setValidationError('Please paste an error log, stack trace, or compiler error before analyzing.');
       return;
@@ -56,6 +57,14 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
       os: os || undefined,
       code_context: showCodeContext && codeContext.trim() ? codeContext.trim() : undefined,
     });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Ctrl+Enter or Cmd+Enter submits form
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSubmit();
+    }
   };
 
   return (
@@ -85,6 +94,7 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
           <div className="flex items-center justify-between mb-1.5">
             <label htmlFor="error_text" className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
               Paste Error Log or Stack Trace <span className="text-rose-500 dark:text-rose-400">*</span>
+              <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400 ml-1">(Press Ctrl+Enter to submit)</span>
             </label>
             {errorText && (
               <button
@@ -101,6 +111,7 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
             id="error_text"
             rows={6}
             value={errorText}
+            onKeyDown={handleKeyDown}
             onChange={(e) => {
               setErrorText(e.target.value);
               if (validationError) setValidationError('');
