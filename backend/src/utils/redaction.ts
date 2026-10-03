@@ -25,7 +25,7 @@ export function redactSensitiveData(text: string): string {
   redacted = redacted.replace(/(:\/\/[^:]+:)([^@]+)(@)/g, '$1[REDACTED_PASSWORD]$3');
 
   // 6. Redact Private RSA / SSH Keys
-  redacted = redacted.replace(/-----BEGIN (?:RSA|OPENSSH|EC|PGP) PRIVATE KEY-----[\s\S]*?-----END \1 PRIVATE KEY-----/g, '[REDACTED_PRIVATE_KEY]');
+  redacted = redacted.replace(/-----BEGIN (RSA|OPENSSH|EC|PGP) PRIVATE KEY-----[\s\S]*?-----END \1 PRIVATE KEY-----/g, '[REDACTED_PRIVATE_KEY]');
 
   return redacted;
 }

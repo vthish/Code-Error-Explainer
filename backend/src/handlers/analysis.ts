@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { createAnalysisSchema } from '../schemas/analysis.js';
 import { getAIProvider } from '../services/ai/factory.js';
-import { HistoryRepository } from '../services/history/repository.ts';
+import { HistoryRepository } from '../services/history/repository.js';
 import { redactSensitiveData } from '../utils/redaction.js';
 import { AppError } from '../errors/AppError.js';
 import { logger } from '../utils/logger.js';
 
-export async function analyzeErrorHandler(req: Request, res: Response, next: NextFunction): void {
+export async function analyzeErrorHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const parseResult = createAnalysisSchema.safeParse(req.body);
 
@@ -45,9 +45,11 @@ export async function analyzeErrorHandler(req: Request, res: Response, next: Nex
   }
 }
 
-export async function reanalyzeHandler(req: Request, res: Response, next: NextFunction): void {
+export async function reanalyzeHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { id } = req.params;
+    const rawId = req.params.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
     if (!id) {
       throw AppError.badRequest('Analysis ID is required.');
     }

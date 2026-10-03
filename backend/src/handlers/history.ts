@@ -23,7 +23,9 @@ export function getAnalysesHandler(req: Request, res: Response, next: NextFuncti
 
 export function getAnalysisByIdHandler(req: Request, res: Response, next: NextFunction): void {
   try {
-    const { id } = req.params;
+    const rawId = req.params.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
     if (!id) {
       throw AppError.badRequest('Analysis ID is required.');
     }
@@ -41,7 +43,9 @@ export function getAnalysisByIdHandler(req: Request, res: Response, next: NextFu
 
 export function deleteAnalysisHandler(req: Request, res: Response, next: NextFunction): void {
   try {
-    const { id } = req.params;
+    const rawId = req.params.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
     if (!id) {
       throw AppError.badRequest('Analysis ID is required.');
     }
