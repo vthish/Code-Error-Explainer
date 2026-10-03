@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: code_error_explainer_backend
+    ports:
+      - "3001:3001"
+    environment:
+      - APP_ENV=production
+      - APP_HOST=0.0.0.0
+      - APP_PORT=3001
+      - FRONTEND_ORIGIN=http://localhost:80
+      - DATABASE_PATH=/app/data/error_explainer.db
+      - AI_PROVIDER=${AI_PROVIDER:-mock}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - sqlite_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: code_error_explainer_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  sqlite_data:
+    driver: local
