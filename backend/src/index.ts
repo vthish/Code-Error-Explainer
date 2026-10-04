@@ -2,6 +2,7 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { runMigrations } from './database/migrations.js';
 import { closeDatabase } from './database/connection.js';
+import { initKeepAliveService } from './services/keepAlive.js';
 import { logger } from './utils/logger.js';
 
 async function startServer() {
@@ -14,6 +15,9 @@ async function startServer() {
     const server = app.listen(env.APP_PORT, env.APP_HOST, () => {
       logger.info(`AI Error Explainer backend running at http://${env.APP_HOST}:${env.APP_PORT}`);
       logger.info(`Environment: ${env.APP_ENV} | Active AI Provider: ${env.AI_PROVIDER}`);
+      
+      // Initialize 14-minute keepalive service
+      initKeepAliveService();
     });
 
     const gracefulShutdown = (signal: string) => {
@@ -34,3 +38,4 @@ async function startServer() {
 }
 
 startServer();
+

@@ -1,4 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { AuthenticatedRequest } from '../middleware/auth.js';
 import { createAnalysisSchema } from '../schemas/analysis.js';
 import { getAIProvider } from '../services/ai/factory.js';
 import { HistoryRepository } from '../services/history/repository.js';
@@ -6,7 +7,7 @@ import { redactSensitiveData } from '../utils/redaction.js';
 import { AppError } from '../errors/AppError.js';
 import { logger } from '../utils/logger.js';
 
-export async function analyzeErrorHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function analyzeErrorHandler(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const parseResult = createAnalysisSchema.safeParse(req.body);
 
@@ -27,17 +28,20 @@ export async function analyzeErrorHandler(req: Request, res: Response, next: Nex
       code_context: sanitizedCodeContext,
     };
 
+    const userId = req.user?.id || null;
+
     logger.info('Received error analysis request', {
       language: sanitizedInput.language,
       framework: sanitizedInput.framework,
       textLength: sanitizedInput.error_text.length,
+      userId: userId || 'guest',
     });
 
     const aiProvider = getAIProvider();
     const aiResult = await aiProvider.analyzeError(sanitizedInput);
 
     // Persist analysis to database
-    const savedRecord = HistoryRepository.saveAnalysis(sanitizedInput, aiResult);
+    const savedRecord = HistoryRepository.saveAnalysis(sanitizedInput, aiResult, userId);
 
     res.status(200).json(savedRecord);
   } catch (error) {
@@ -45,16 +49,17 @@ export async function analyzeErrorHandler(req: Request, res: Response, next: Nex
   }
 }
 
-export async function reanalyzeHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function reanalyzeHandler(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const rawId = req.params.id;
     const id = Array.isArray(rawId) ? rawId[0] : rawId;
+    const userId = req.user?.id || null;
 
     if (!id) {
       throw AppError.badRequest('Analysis ID is required.');
     }
 
-    const existingRecord = HistoryRepository.getAnalysisById(id);
+    const existingRecord = HistoryRepository.getAnalysisById(id, userId);
     if (!existingRecord) {
       throw AppError.notFound(`Analysis record with ID ${id} was not found.`);
     }
@@ -72,10 +77,11 @@ export async function reanalyzeHandler(req: Request, res: Response, next: NextFu
     const newAiResult = await aiProvider.analyzeError(inputData);
 
     // Save as new analysis entry
-    const savedRecord = HistoryRepository.saveAnalysis(inputData, newAiResult);
+    const savedRecord = HistoryRepository.saveAnalysis(inputData, newAiResult, userId);
 
     res.status(200).json(savedRecord);
   } catch (error) {
     next(error);
   }
 }
+

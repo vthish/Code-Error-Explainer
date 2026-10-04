@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: code-error-explainer-backend
+    env: node
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_HOST
+        value: 0.0.0.0
+      - key: APP_PORT
+        value: 10000
+      - key: DATABASE_PATH
+        value: ./data/error_explainer.db
+      - key: AI_PROVIDER
+        value: mock
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+    healthCheckPath: /api/health
+
+  - type: web
+    name: code-error-explainer-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://code-error-explainer-backend.onrender.com/api
+
+cron:
+  - name: render-14min-keepalive
+    schedule: "*/14 * * * *"
+    command: "curl -s https://code-error-explainer-backend.onrender.com/api/health > /dev/null || true"

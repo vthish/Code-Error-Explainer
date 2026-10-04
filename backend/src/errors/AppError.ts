@@ -20,6 +20,10 @@ export class AppError extends Error {
     return new AppError(message, 404, 'NOT_FOUND');
   }
 
+  static unauthorized(message = 'Unauthorized access'): AppError {
+    return new AppError(message, 401, 'UNAUTHORIZED');
+  }
+
   static rateLimitExceeded(message = 'Rate limit exceeded. Please try again later.'): AppError {
     return new AppError(message, 429, 'RATE_LIMIT_EXCEEDED');
   }

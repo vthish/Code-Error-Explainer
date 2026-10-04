@@ -56,3 +56,17 @@ export interface APIErrorResponse {
     message: string;
   };
 }
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  picture?: string | null;
+}
+
+export interface AuthResponse {
+  message: string;
+  token: string;
+  user: User;
+}
+

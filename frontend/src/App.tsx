@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -24,25 +25,28 @@ export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <Router>
-          <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
-            <Navbar />
-            <main className="flex-1">
-              <ErrorBoundary>
-                <Routes>
-                  <Route path="/" element={<AnalyzerPage />} />
-                  <Route path="/history" element={<HistoryPage />} />
-                  <Route path="/about" element={<AboutPage />} />
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
-              </ErrorBoundary>
-            </main>
-            <Footer />
-          </div>
-        </Router>
+        <AuthProvider>
+          <Router>
+            <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans selection:bg-emerald-500/20 selection:text-emerald-500 transition-colors duration-200">
+              <Navbar />
+              <main className="flex-1">
+                <ErrorBoundary>
+                  <Routes>
+                    <Route path="/" element={<AnalyzerPage />} />
+                    <Route path="/history" element={<HistoryPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Routes>
+                </ErrorBoundary>
+              </main>
+              <Footer />
+            </div>
+          </Router>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
 };
 
 export default App;
+
