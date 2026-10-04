@@ -33,7 +33,11 @@ const envSchema = z.object({
 export type EnvConfig = z.infer<typeof envSchema>;
 
 function loadEnv(): EnvConfig {
-  const result = envSchema.safeParse(process.env);
+  const envData = {
+    ...process.env,
+    APP_PORT: process.env.PORT ? Number(process.env.PORT) : (process.env.APP_PORT ? Number(process.env.APP_PORT) : 3001),
+  };
+  const result = envSchema.safeParse(envData);
   if (!result.success) {
     console.error('Invalid environment configuration:', result.error.format());
     throw new Error('Invalid environment configuration');
