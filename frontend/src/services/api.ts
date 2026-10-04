@@ -1,15 +1,22 @@
-import { AnalysisInput, AnalysisRecordDTO, HistoryListResponse, APIErrorResponse } from '../types';
+import { AnalysisInput, AnalysisRecordDTO, HistoryListResponse, APIErrorResponse, User, AuthResponse } from '../types';
 
 const API_BASE = '/api';
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options?.headers as Record<string, string>),
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${API_BASE}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
       ...options,
+      headers,
     });
 
     if (!res.ok) {
@@ -58,6 +65,25 @@ class ApiService {
       method: 'POST',
     });
   }
+
+  async loginWithGoogle(payload: { credential?: string; email?: string; name?: string; picture?: string; googleId?: string }): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async loginDemo(email?: string, name?: string): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/auth/demo', {
+      method: 'POST',
+      body: JSON.stringify({ email, name }),
+    });
+  }
+
+  async getMe(): Promise<{ user: User }> {
+    return this.request<{ user: User }>('/auth/me');
+  }
 }
 
 export const api = new ApiService();
+

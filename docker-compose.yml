@@ -1,8 +1,11 @@
+name: code_error_explainer
+
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: code_error_explainer_backend:latest
     container_name: code_error_explainer_backend
     ports:
       - "3001:3001"
@@ -16,6 +19,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - PING_URL=${PING_URL:-}
     volumes:
       - sqlite_data:/app/data
     restart: unless-stopped
@@ -29,6 +33,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: code_error_explainer_frontend:latest
     container_name: code_error_explainer_frontend
     ports:
       - "80:80"
@@ -40,3 +45,4 @@ services:
 volumes:
   sqlite_data:
     driver: local
+
