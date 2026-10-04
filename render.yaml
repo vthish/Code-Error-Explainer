@@ -37,4 +37,4 @@ services:
   - type: cron
     name: render-14min-keepalive
     schedule: "*/14 * * * *"
-    command: "curl -s https://code-error-explainer-backend.onrender.com/api/health > /dev/null || true"
+    startCommand: "curl -s https://code-error-explainer-backend.onrender.com/api/health > /dev/null || true"
