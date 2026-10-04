@@ -49,15 +49,26 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
     }
 
     setValidationError('');
-    onSubmit({
+    const submittedInput = {
       error_text: errorText.trim(),
       language: language || undefined,
       framework: framework || undefined,
       environment: environment || undefined,
       os: os || undefined,
       code_context: showCodeContext && codeContext.trim() ? codeContext.trim() : undefined,
-    });
+    };
+
+    // Auto reset optional dropdown selections back to default for the next analysis
+    setLanguage('');
+    setFramework('');
+    setEnvironment('');
+    setOs('');
+    setCodeContext('');
+    setShowCodeContext(false);
+
+    onSubmit(submittedInput);
   };
+
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Ctrl+Enter or Cmd+Enter submits form
