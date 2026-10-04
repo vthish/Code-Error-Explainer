@@ -12,7 +12,7 @@ import fs from 'fs';
 
 const API_URL = process.env.EXPLAINER_API_URL || 'https://code-error-explainer-backend.onrender.com/api/analyze';
 
-async function readStdin(): Promise<string> {
+async function readStdin() {
   return new Promise((resolve) => {
     let data = '';
     process.stdin.setEncoding('utf-8');

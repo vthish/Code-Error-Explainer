@@ -337,21 +337,209 @@ export class MockAIProvider implements AIProvider {
 
 
   async chat(context: ChatContext, messages: ChatMessage[]): Promise<string> {
-    const lastUserMessage = messages.filter((m) => m.role === 'user').pop()?.content.toLowerCase() || '';
+    const rawLastMessage = messages.filter((m) => m.role === 'user').pop()?.content || '';
+    const lastUserMessage = rawLastMessage.toLowerCase().trim();
+    const lang = (context.language || 'typescript').toLowerCase();
+    const errType = context.error_type || 'Runtime Error';
+    const cause = context.likely_cause || 'Unexpected data state or unhandled exception path';
+    const fixCode = context.fixed_code || `// Defensive check for ${errType}\nif (!data) {\n  throw new Error("Missing required data");\n}`;
 
-    if (lastUserMessage.includes('test') || lastUserMessage.includes('prevent')) {
-      return `### Automated Test to Prevent this Error\n\nHere is a test case you can add to your test suite to safeguard against this regression:\n\n\`\`\`${(context.language || 'typescript').toLowerCase()}\n// Regression test for ${context.error_type || 'error'}\ndescribe('Error Guard: ${context.error_type || 'edge case'}', () => {\n  it('should handle missing, null, or empty payloads gracefully', () => {\n    const testInput = null;\n    expect(() => {\n      // Execute safe handler\n      const result = testInput ?? 'fallback_value';\n      expect(result).toBeDefined();\n    }).not.toThrow();\n  });\n});\n\`\`\`\n\n**Best Practice:** Always run your unit tests in your CI/CD pipeline before merging to production.`;
+    // 1. Root Cause / "Why" / "Ai" / "Mokada" / "Reason"
+    if (
+      lastUserMessage.includes('why') ||
+      lastUserMessage.includes('cause') ||
+      lastUserMessage.includes('reason') ||
+      lastUserMessage.includes('ai mehema') ||
+      lastUserMessage.includes('mokada')
+    ) {
+      return `### 🎯 Root Cause Analysis for **${errType}**
+
+Here is why this error occurred:
+* **Primary Trigger:** \`${cause}\`
+* **Execution State:** The runtime encountered an unexpected state while evaluating this code block. In ${context.language || 'modern software'}, this typically occurs when:
+  1. An asynchronous promise or network call resolved with an unexpected payload shape.
+  2. A required configuration variable or parameter was missing from the runtime environment.
+  3. Defensive boundary checks were bypassed before accessing properties.
+
+> 💡 **Recommendation:** Check your call stack and place a conditional breakpoint right before this line executes to inspect variable values.`;
     }
 
-    if (lastUserMessage.includes('explain') || lastUserMessage.includes('simple') || lastUserMessage.includes('junior')) {
-      return `### Simple Explanation (In Plain English)\n\nImagine you are looking for a house at an address that doesn't exist on the map. Instead of asking for directions, the computer stops running and throws an error:\n\n* **What happened:** The code tried to read a property or key that wasn't created yet.\n* **The Root Cause:** \`${context.likely_cause || 'The expected data was missing at runtime'}\`\n* **The Quick Fix:** Always check if the object exists first before accessing nested fields (using \`?.\` in JS/TS or \`.get()\` in Python).`;
+    // 2. "How to fix" / "Solution" / "Kohomada" / "Hadanne" / "Fix"
+    if (
+      lastUserMessage.includes('how') ||
+      lastUserMessage.includes('fix') ||
+      lastUserMessage.includes('solve') ||
+      lastUserMessage.includes('hadanne') ||
+      lastUserMessage.includes('kohomada') ||
+      lastUserMessage.includes('solution')
+    ) {
+      return `### 🛠️ Step-by-Step Resolution Guide for **${errType}**
+
+Follow these concrete steps to resolve the issue:
+
+1. **Apply the patch fix:**
+\`\`\`${lang}
+${fixCode}
+\`\`\`
+
+2. **Validation Checklist:**
+   * Verify null/undefined checks exist for all object chains (e.g. \`data?.property\`).
+   * Wrap external API or database calls in \`try / catch\` error boundaries.
+   * Provide safe default values (e.g. \`const items = payload?.items || [];\`).
+
+3. **Re-run your test suite:** Confirm the error no longer reproduces with both valid and empty payloads.`;
     }
 
-    if (lastUserMessage.includes('install') || lastUserMessage.includes('command') || lastUserMessage.includes('terminal')) {
-      return `### Terminal Commands & Dependency Fixes\n\nDepending on your package manager, run the appropriate command in your terminal:\n\n\`\`\`bash\n# If Node.js / npm:\nnpm install\nnpm run build\n\n# If Python / pip:\npip install -r requirements.txt\n\n# If Docker:\ndocker compose down && docker compose up --build -d\n\`\`\`\n\nAfter running the command, restart your local development server to load the changes.`;
+    // 3. Automated Tests / "Test" / "Prevent" / "Vitest" / "Jest"
+    if (
+      lastUserMessage.includes('test') ||
+      lastUserMessage.includes('prevent') ||
+      lastUserMessage.includes('unit') ||
+      lastUserMessage.includes('vitest') ||
+      lastUserMessage.includes('jest')
+    ) {
+      return `### 🧪 Automated Unit Test Guard for **${errType}**
+
+Here is an automated regression test to ensure this error never occurs in production again:
+
+\`\`\`${lang}
+describe('Guard against ${errType}', () => {
+  it('should handle edge cases and empty data gracefully without throwing', () => {
+    // 1. Arrange edge-case input
+    const edgeCaseInput = null;
+
+    // 2. Act with defensive handler
+    const safeExecution = () => {
+      if (!edgeCaseInput) return 'default_fallback';
+      return edgeCaseInput;
+    };
+
+    // 3. Assert no unhandled crash occurs
+    expect(safeExecution).not.toThrow();
+    expect(safeExecution()).toBe('default_fallback');
+  });
+});
+\`\`\`
+
+**Best Practice:** Add this test to your CI/CD pipeline (\`npm test\` or \`pytest\`) to prevent future regressions.`;
     }
 
-    return `### AI Debugging Assistance for **${context.error_type || 'this error'}**\n\nTo resolve this effectively:\n\n1. **Inspect the source line:** Check the exact line where the crash happened: \`${context.likely_cause || 'check stack trace'}\`\n2. **Apply the defensive fix:**\n\`\`\`${(context.language || 'javascript').toLowerCase()}\n${context.fixed_code || '// Verify input data before execution\nif (!data) return null;'}\n\`\`\`\n3. **Verify in development:** Run your dev server and verify with invalid or edge-case test payloads.\n\nLet me know if you would like me to generate specific unit tests, Docker configs, or refactored code!`;
+    // 4. Simple Explanation / "Explain Simply" / "Junior" / "Therenne na"
+    if (
+      lastUserMessage.includes('explain') ||
+      lastUserMessage.includes('simple') ||
+      lastUserMessage.includes('junior') ||
+      lastUserMessage.includes('therenne na') ||
+      lastUserMessage.includes('plain')
+    ) {
+      return `### 💡 Simple Explanation (In Plain English)
+
+Imagine you order food through a delivery app. When the courier arrives, they hand you an empty sealed bag. If you try to eat the burger inside without checking, you realize there is nothing there to take a bite out of!
+
+* **What happened here:** Your program tried to open or use something that was empty (\`undefined\` / \`null\` / missing).
+* **The Culprit:** \`${cause}\`
+* **The Quick Fix:** Always peek inside the bag first before taking a bite! (Use \`?.\` in JS or check \`if (item != null)\`).`;
+    }
+
+    // 5. Terminal Commands / "Command" / "Install" / "Terminal" / "Npm"
+    if (
+      lastUserMessage.includes('install') ||
+      lastUserMessage.includes('command') ||
+      lastUserMessage.includes('terminal') ||
+      lastUserMessage.includes('npm') ||
+      lastUserMessage.includes('docker')
+    ) {
+      return `### 💻 Terminal & Package Commands
+
+Run the following commands in your project root to clean dependencies and rebuild:
+
+\`\`\`bash
+# 1. Clean dependencies & build artifacts
+rm -rf node_modules package-lock.json
+
+# 2. Reinstall cleanly
+npm install
+
+# 3. Rebuild and verify
+npm run build
+\`\`\`
+
+If using Docker:
+\`\`\`bash
+docker compose down
+docker compose up --build -d
+\`\`\``;
+    }
+
+    // 6. Code Examples / "Example" / "Sample" / "Demo"
+    if (
+      lastUserMessage.includes('example') ||
+      lastUserMessage.includes('sample') ||
+      lastUserMessage.includes('demo') ||
+      lastUserMessage.includes('code')
+    ) {
+      return `### 💻 Before & After Code Example
+
+#### ❌ Before (Causes ${errType}):
+\`\`\`${lang}
+function processData(response) {
+  // Dangerous: Will crash if response or response.user is undefined
+  return response.user.profile.name;
+}
+\`\`\`
+
+#### ✅ After (Safe & Robust):
+\`\`\`${lang}
+function processData(response) {
+  // Safe: Optional chaining and fallback guarantee stability
+  return response?.user?.profile?.name ?? 'Guest User';
+}
+\`\`\``;
+    }
+
+    // 7. Sinhala Queries ("kohomada", "mokakda", "puluwanda", "wada na", "sinhalen")
+    if (
+      lastUserMessage.includes('mokakda') ||
+      lastUserMessage.includes('puluwanda') ||
+      lastUserMessage.includes('sinhalen') ||
+      lastUserMessage.includes('wada na')
+    ) {
+      return `### 🇱🇰 සිංහලෙන් පැහැදිලි කිරීම (Sinhala Explanation)
+
+ඔබගේ ප්‍රශ්නය: **"${rawLastMessage}"**
+
+* **Error එක:** **${errType}**
+* **හේතුව:** \`${cause}\`
+* **විසඳුම:** Code එක run වෙද්දී අදාළ data variable එකක් null හෝ missing වීම නිසා මෙම error එක ඇති වේ. එය විසඳීමට code එකට \`if\` check එකක් හෝ optional chaining (\`?.\`) එකතු කරන්න.
+
+\`\`\`${lang}
+${fixCode}
+\`\`\`
+
+> 💡 **සටහන:** දැනට Backend එක run වන්නේ **Mock AI Mode** එකෙනි. සම්පූර්ණ Sinhala හෝ ඕනෑම අලුත් ප්‍රශ්නයකට නිදහසේ පිළිතුරු ලබා ගැනීමට Free Google Gemini API Key එකක් \`.env\` එකට දමන්න.`;
+    }
+
+    // 8. Dynamic Fallback for any other custom question
+    return `### 🤖 AI Assistant Response
+
+**Your Question:** *" ${rawLastMessage} "*
+
+Regarding **${errType}** in your ${context.language || 'application'}:
+
+1. **Context Analysis:**
+   * **Observed Failure:** \`${cause}\`
+   * **Target Language:** \`${context.language || 'Auto-detected'}\`
+
+2. **Actionable Recommendation:**
+   Review the lines leading up to the error. Ensure all dynamic data sources, network requests, and external parameters validate incoming payloads before invoking methods or indexing properties.
+
+3. **Recommended Fix Snippet:**
+\`\`\`${lang}
+${fixCode}
+\`\`\`
+
+---
+> ⚡ **Tip:** You are currently using the **Smart Mock AI Provider**. To enable deep, unrestricted natural-language conversational reasoning on ANY custom question, add your free **Google Gemini API Key** in \`backend/.env\` (\`AI_PROVIDER=gemini\`).`;
   }
 
   async healthCheck(): Promise<boolean> {

@@ -120,19 +120,19 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-6 shadow-xl backdrop-blur-md mb-8 transition-colors">
+    <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-6 shadow-xl backdrop-blur-md mb-6 sm:mb-8 transition-colors">
       {/* Sample Error Presets */}
-      <div className="mb-5">
+      <div className="mb-4 sm:mb-5">
         <label className="block text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
           Try a Quick Example Error:
         </label>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+        <div className="flex flex-wrap gap-1 sm:gap-1.5">
           {SAMPLE_ERRORS.map((sample, idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => handleSampleClick(sample)}
-              className="text-[11px] sm:text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 transition-colors"
+              className="text-[10px] sm:text-xs px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 transition-colors"
             >
               {sample.name}
             </button>
@@ -143,12 +143,12 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Main Error Textarea */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="error_text" className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 flex flex-wrap items-center gap-1">
+          <div className="flex items-center justify-between gap-1.5 mb-1.5 flex-wrap">
+            <label htmlFor="error_text" className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1">
               <span>Paste Error Log or Stack Trace <span className="text-rose-500 dark:text-rose-400">*</span></span>
-              <span className="text-[10px] sm:text-[11px] font-normal text-emerald-600 dark:text-emerald-400 ml-1">(Press Enter or Ctrl+Enter to analyze)</span>
+              <span className="hidden sm:inline-block text-[11px] font-normal text-emerald-600 dark:text-emerald-400 ml-1">(Press Enter or Ctrl+Enter to analyze)</span>
             </label>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 shrink-0">
               <input
                 ref={fileInputRef}
                 type="file"

@@ -16,7 +16,11 @@ services:
       - key: DATABASE_PATH
         value: ./data/error_explainer.db
       - key: AI_PROVIDER
-        value: mock
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash
       - key: JWT_SECRET
         generateValue: true
       - key: GOOGLE_CLIENT_ID
