@@ -1,6 +1,21 @@
+/// <reference types="vite/client" />
 import { AnalysisInput, AnalysisRecordDTO, HistoryListResponse, APIErrorResponse, User, AuthResponse } from '../types';
 
-const API_BASE = '/api';
+const getApiBaseUrl = (): string => {
+  const envUrl = (import.meta as any).env?.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
+    return 'https://code-error-explainer-backend.onrender.com/api';
+  }
+  return '/api';
+};
+
+
+
+const API_BASE = getApiBaseUrl();
+
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
