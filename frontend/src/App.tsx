@@ -27,7 +27,7 @@ export const App: React.FC = () => {
       <ThemeProvider>
         <AuthProvider>
           <Router>
-            <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans selection:bg-emerald-500/20 selection:text-emerald-500 transition-colors duration-200">
+            <div className="flex flex-col min-h-screen max-w-full overflow-x-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans selection:bg-emerald-500/20 selection:text-emerald-500 transition-colors duration-200">
               <Navbar />
               <main className="flex-1">
                 <ErrorBoundary>

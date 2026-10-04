@@ -6,6 +6,7 @@ export function runMigrations(): void {
 
   logger.info('Running database migrations...');
 
+  // 1. Create users table
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY NOT NULL,
@@ -15,7 +16,10 @@ export function runMigrations(): void {
       picture TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+  `);
 
+  // 2. Create analyses table
+  db.exec(`
     CREATE TABLE IF NOT EXISTS analyses (
       id TEXT PRIMARY KEY NOT NULL,
       user_id TEXT,
@@ -35,13 +39,9 @@ export function runMigrations(): void {
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
     );
-
-    CREATE INDEX IF NOT EXISTS idx_analyses_created_at ON analyses(created_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_analyses_error_type ON analyses(error_type);
-    CREATE INDEX IF NOT EXISTS idx_analyses_user_id ON analyses(user_id);
   `);
 
-  // Migration step: ensure user_id column exists if table was already created earlier without it
+  // 3. Migration step: ensure user_id column exists if table was created in an older version
   try {
     const tableInfo = db.pragma('table_info(analyses)') as Array<{ name: string }>;
     const hasUserId = tableInfo.some((col) => col.name === 'user_id');
@@ -52,6 +52,13 @@ export function runMigrations(): void {
   } catch (err) {
     logger.warn('User ID migration check warning:', { error: String(err) });
   }
+
+  // 4. Create indexes after ensuring all columns exist
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_analyses_created_at ON analyses(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_analyses_error_type ON analyses(error_type);
+    CREATE INDEX IF NOT EXISTS idx_analyses_user_id ON analyses(user_id);
+  `);
 
   logger.info('Database migrations completed successfully.');
 }
