@@ -3,10 +3,22 @@ import path from 'path';
 import fs from 'fs';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+import { FileDatabase } from './fileStore.js';
 
-let dbInstance: Database.Database | null = null;
+export interface AnyDatabase {
+  exec(sql: string): void;
+  pragma(pragmaStr: string): any;
+  prepare(sql: string): {
+    run(...params: any[]): { changes: number };
+    get(...params: any[]): any;
+    all(...params: any[]): any[];
+  };
+  close(): void;
+}
 
-export function getDatabase(): Database.Database {
+let dbInstance: AnyDatabase | null = null;
+
+export function getDatabase(): AnyDatabase {
   if (dbInstance) {
     return dbInstance;
   }
@@ -19,18 +31,28 @@ export function getDatabase(): Database.Database {
     logger.info(`Created database directory at: ${dir}`);
   }
 
-  dbInstance = new Database(dbPath);
-  dbInstance.pragma('journal_mode = WAL');
-  dbInstance.pragma('foreign_keys = ON');
+  try {
+    const sqliteDb = new Database(dbPath);
+    sqliteDb.pragma('journal_mode = WAL');
+    sqliteDb.pragma('foreign_keys = ON');
 
-  logger.info(`Connected to SQLite database at: ${dbPath}`);
-  return dbInstance;
+    logger.info(`Connected to SQLite database at: ${dbPath}`);
+    dbInstance = sqliteDb;
+    return dbInstance;
+  } catch (err: any) {
+    logger.warn(`Native SQLite load failed (${err?.code || err?.message || 'unknown'}). Falling back to resilient JSON storage engine.`, {
+      error: err?.message,
+    });
+    dbInstance = new FileDatabase(dbPath);
+    logger.info(`Resilient JSON database initialized at: ${dbPath.replace(/\.db$/, '')}_store.json`);
+    return dbInstance;
+  }
 }
 
 export function closeDatabase(): void {
   if (dbInstance) {
     dbInstance.close();
     dbInstance = null;
-    logger.info('Closed SQLite database connection.');
+    logger.info('Closed database connection.');
   }
 }

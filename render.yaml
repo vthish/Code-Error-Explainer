@@ -2,7 +2,7 @@ services:
   - type: web
     name: code-error-explainer-backend
     env: node
-    buildCommand: cd backend && npm install && npm run build
+    buildCommand: cd backend && npm install && npm rebuild better-sqlite3 && npm run build
     startCommand: cd backend && npm start
     envVars:
       - key: NODE_VERSION
