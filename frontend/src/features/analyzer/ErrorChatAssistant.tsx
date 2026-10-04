@@ -26,16 +26,50 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFloating, setIsFloating] = useState(false);
   const [isFloatingMinimized, setIsFloatingMinimized] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const floatingMessagesContainerRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const floatingMessagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Use container.scrollTo instead of window-level scrollIntoView to prevent mobile keyboard layout displacement
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    messagesEndRef.current?.scrollIntoView({ behavior });
-    floatingMessagesEndRef.current?.scrollIntoView({ behavior });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
+    if (floatingMessagesContainerRef.current) {
+      floatingMessagesContainerRef.current.scrollTo({
+        top: floatingMessagesContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
   };
+
+  // Track visualViewport for mobile virtual keyboard height adaptation
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleViewportChange = () => {
+      if (window.visualViewport) {
+        setViewportHeight(window.visualViewport.height);
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      window.visualViewport.addEventListener('scroll', handleViewportChange);
+      setViewportHeight(window.visualViewport.height);
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleViewportChange);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isExpanded || (isFloating && !isFloatingMinimized)) {
@@ -198,7 +232,7 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
 
                   {msg.role === 'user' && (
                     <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 shrink-0 mt-0.5">
-                      <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <User className="w-3.5 h-3.5" />
                     </div>
                   )}
                 </div>
@@ -210,7 +244,6 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
                   <span>AI is thinking & formulating answer...</span>
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             {/* Input Bar */}
@@ -242,21 +275,20 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
         )}
       </div>
 
-      {/* 2. Pop-up Chat Modal / Mobile Bottom Sheet Window */}
+      {/* 2. Pop-up Chat Modal Window (Mobile Virtual Keyboard Adaptive) */}
       {isFloating && (
-        <div className="fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-50 flex flex-col justify-end sm:justify-end sm:items-end pointer-events-auto bg-black/50 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none transition-all">
+        <div
+          className="fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-50 flex flex-col justify-start sm:justify-end sm:items-end pointer-events-auto bg-black/70 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none"
+          style={
+            viewportHeight && typeof window !== 'undefined' && window.innerWidth < 640
+              ? { height: `${viewportHeight}px`, maxHeight: `${viewportHeight}px` }
+              : undefined
+          }
+        >
           {!isFloatingMinimized ? (
-            <div className="w-full sm:w-[460px] h-[86vh] sm:h-[540px] flex flex-col bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-700 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 duration-200">
-              {/* Mobile Drag Indicator Handle */}
-              <div
-                onClick={() => setIsFloatingMinimized(true)}
-                className="sm:hidden w-full pt-2.5 pb-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 flex justify-center cursor-pointer"
-              >
-                <div className="w-12 h-1.5 bg-white/40 rounded-full" />
-              </div>
-
-              {/* Pop-up Header */}
-              <div className="px-3.5 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white flex items-center justify-between shadow-sm">
+            <div className="w-full sm:w-[460px] h-full sm:h-[540px] max-h-full sm:max-h-[85vh] flex flex-col bg-white dark:bg-slate-900 border-b sm:border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md transition-all">
+              {/* Pop-up Header (Pinned at top) */}
+              <div className="shrink-0 px-3.5 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white flex items-center justify-between shadow-sm">
                 <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
                   <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0 shadow-xs">
                     <Bot className="w-4 h-4 text-white" />
@@ -264,7 +296,7 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
                   <div className="min-w-0">
                     <h3 className="text-xs sm:text-sm font-bold flex items-center gap-1.5">
                       <span>Error AI Assistant</span>
-                      <span className="px-1.5 py-0.2 text-[9px] bg-white/25 rounded-full font-medium">Pop-up</span>
+                      <span className="px-1.5 py-0.2 text-[9px] bg-white/25 rounded-full font-medium">Live</span>
                     </h3>
                     <p className="text-[10px] text-white/80 truncate max-w-[200px] sm:max-w-[260px]">{result.error_type}</p>
                   </div>
@@ -291,7 +323,7 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
               </div>
 
               {/* Pop-up Quick Prompts: Horizontal swipeable chips on mobile */}
-              <div className="p-2 sm:p-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5 bg-slate-50/90 dark:bg-slate-950/60 overflow-x-auto no-scrollbar shrink-0">
+              <div className="shrink-0 p-2 sm:p-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5 bg-slate-50/90 dark:bg-slate-950/60 overflow-x-auto no-scrollbar">
                 {QUICK_PROMPTS.map((item, idx) => (
                   <button
                     key={idx}
@@ -308,7 +340,7 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
               {/* Pop-up Messages Body with Auto-Scroll */}
               <div
                 ref={floatingMessagesContainerRef}
-                className="flex-1 p-3.5 sm:p-4 space-y-3 overflow-y-auto scroll-smooth overscroll-contain"
+                className="flex-1 min-h-0 p-3.5 sm:p-4 space-y-3 overflow-y-auto scroll-smooth overscroll-contain"
               >
                 {messages.map((msg, idx) => (
                   <div
@@ -345,20 +377,22 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
                     <span>AI is formulating answer...</span>
                   </div>
                 )}
-                <div ref={floatingMessagesEndRef} />
               </div>
 
-              {/* Pop-up Input Bar */}
+              {/* Pop-up Input Bar: Stays pinned above keyboard */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSend();
                 }}
-                className="p-2.5 sm:p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-1.5 sm:gap-2 shrink-0"
+                className="shrink-0 p-2.5 sm:p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-1.5 sm:gap-2 shadow-lg"
               >
                 <input
                   type="text"
                   value={input}
+                  onFocus={() => {
+                    setTimeout(() => scrollToBottom('smooth'), 120);
+                  }}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask follow-up questions..."
                   disabled={isLoading}
