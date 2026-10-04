@@ -16,6 +16,7 @@ export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: Ne
 
   const user = AuthRepository.verifyToken(token);
   if (user) {
+    AuthRepository.ensureUserExists(user);
     req.user = user;
   }
   next();

@@ -39,7 +39,19 @@ export class HistoryRepository {
     const db = getDatabase();
     const id = `anls_${uuidv4()}`;
     const createdAt = new Date().toISOString();
-    const activeUserId = userId || null;
+    
+    // Safely verify if user exists in database to avoid foreign key errors
+    let activeUserId: string | null = null;
+    if (userId) {
+      try {
+        const userExists = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+        if (userExists) {
+          activeUserId = userId;
+        }
+      } catch {
+        activeUserId = null;
+      }
+    }
 
     const stmt = db.prepare(`
       INSERT INTO analyses (
@@ -51,24 +63,51 @@ export class HistoryRepository {
       )
     `);
 
-    stmt.run(
-      id,
-      activeUserId,
-      input.error_text,
-      input.language || null,
-      input.framework || null,
-      input.environment || null,
-      input.os || null,
-      input.code_context || null,
-      result.error_type,
-      result.severity,
-      result.summary,
-      result.explanation,
-      result.likely_cause,
-      JSON.stringify(result),
-      createdAt,
-      createdAt
-    );
+    try {
+      stmt.run(
+        id,
+        activeUserId,
+        input.error_text,
+        input.language || null,
+        input.framework || null,
+        input.environment || null,
+        input.os || null,
+        input.code_context || null,
+        result.error_type,
+        result.severity,
+        result.summary,
+        result.explanation,
+        result.likely_cause,
+        JSON.stringify(result),
+        createdAt,
+        createdAt
+      );
+    } catch (dbErr: any) {
+      // Safe fallback if foreign key constraint fails
+      if (activeUserId && dbErr?.message?.includes('FOREIGN KEY')) {
+        stmt.run(
+          id,
+          null,
+          input.error_text,
+          input.language || null,
+          input.framework || null,
+          input.environment || null,
+          input.os || null,
+          input.code_context || null,
+          result.error_type,
+          result.severity,
+          result.summary,
+          result.explanation,
+          result.likely_cause,
+          JSON.stringify(result),
+          createdAt,
+          createdAt
+        );
+        activeUserId = null;
+      } else {
+        throw dbErr;
+      }
+    }
 
     return {
       id,

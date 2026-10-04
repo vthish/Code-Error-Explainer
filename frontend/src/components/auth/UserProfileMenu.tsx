@@ -23,7 +23,7 @@ export const UserProfileMenu: React.FC = () => {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700/60 transition-all duration-200"
+        className="flex items-center space-x-0 md:space-x-2.5 px-1.5 md:px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700/60 transition-all duration-200"
       >
         {user.picture ? (
           <img src={user.picture} alt={user.name} className="w-7 h-7 rounded-full object-cover border border-emerald-500/50" />
@@ -32,8 +32,8 @@ export const UserProfileMenu: React.FC = () => {
             {user.name.charAt(0).toUpperCase()}
           </div>
         )}
-        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 max-w-[100px] truncate">{user.name}</span>
-        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+        <span className="hidden md:inline text-xs font-semibold text-slate-800 dark:text-slate-200 max-w-[100px] truncate">{user.name}</span>
+        <ChevronDown className="hidden md:inline w-3.5 h-3.5 text-slate-400" />
       </button>
 
       {isOpen && (

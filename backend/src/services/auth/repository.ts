@@ -63,6 +63,25 @@ export class AuthRepository {
     return row || null;
   }
 
+  static ensureUserExists(user: UserDTO): void {
+    try {
+      const db = getDatabase();
+      const existing = db.prepare('SELECT id FROM users WHERE id = ?').get(user.id);
+      if (!existing) {
+        // Also check if email exists under another id
+        const existingByEmail = db.prepare('SELECT id FROM users WHERE email = ?').get(user.email) as { id: string } | undefined;
+        if (!existingByEmail) {
+          db.prepare(`
+            INSERT INTO users (id, google_id, email, name, picture, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(user.id, `user_${user.id}`, user.email, user.name, user.picture || null, new Date().toISOString());
+        }
+      }
+    } catch {
+      // Fallback silently if database operation fails
+    }
+  }
+
   // Lightweight JWT Token Generator (Pure Node.js crypto)
   static generateToken(user: { id: string; email: string; name: string; picture?: string | null }): string {
     const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');

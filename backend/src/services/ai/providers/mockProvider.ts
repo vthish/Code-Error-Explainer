@@ -191,6 +191,129 @@ export class MockAIProvider implements AIProvider {
       };
     }
 
+    // Python KeyError Handling
+    if (errorText.includes('keyerror') || errorText.includes("keyerror:")) {
+      return {
+        error_type: 'Python KeyError (Missing Dictionary Key)',
+        severity: 'medium',
+        summary: 'A dictionary key was accessed that does not exist in the dictionary payload.',
+        explanation:
+          'In Python, accessing a non-existent key using bracket notation dict["key"] raises a KeyError at runtime when the key is missing or nested payload structure is different than expected.',
+        likely_cause: 'The target dictionary key is missing or nested under a different property in the incoming payload.',
+        important_lines: [input.error_text.split('\n').find((l) => l.toLowerCase().includes('keyerror')) || "KeyError: 'metadata'"],
+        possible_causes: [
+          'The incoming JSON payload omitted the requested key.',
+          'The key is named differently or has a typo.',
+          'Nested object is None or dictionary is empty.',
+        ],
+        solutions: [
+          {
+            title: 'Use .get() with Defensive Fallback',
+            description: 'Access dictionary values safely using dict.get("key", default) or safe dictionary navigation.',
+          },
+        ],
+        fixed_code: input.code_context
+          ? `@app.post("/transaction")\nasync def process_transaction(payload: dict):\n    # Defensive dictionary lookup:\n    user_metadata = payload.get("user", {}).get("metadata", {})\n    user_id = user_metadata.get("id")\n    return {"status": "ok", "user_id": user_id}`
+          : `# Safe lookup:\nuser_id = payload.get("user", {}).get("metadata", {}).get("id")`,
+        debug_steps: [
+          'Print or log incoming payload before key access: print("Payload:", payload)',
+          'Verify request body matches schema / Pydantic model validation.',
+          'Use .get() instead of bracket notation for optional fields.',
+        ],
+        confidence: 'high',
+      };
+    }
+
+    // Rust Borrow Checker Error Handling
+    if (errorText.includes('cannot borrow') && errorText.includes('borrowed as immutable')) {
+      return {
+        error_type: 'Rust Borrow Checker Violation (E0502)',
+        severity: 'high',
+        summary: 'Cannot borrow variable as mutable while an active immutable reference still exists.',
+        explanation:
+          'Rust enforces strict aliasing rules: you can have any number of immutable references (&T) OR exactly one mutable reference (&mut T), but not both simultaneously in overlapping scopes.',
+        likely_cause: 'data.push() attempts a mutable borrow while reference is still in scope and used later.',
+        important_lines: [input.error_text.split('\n').find((l) => l.includes('E0502')) || 'error[E0502]: cannot borrow `data` as mutable'],
+        possible_causes: [
+          'Mutable operation occurs before the last read of an immutable borrow.',
+          'Lifetime of immutable borrow spans across mutable method call.',
+        ],
+        solutions: [
+          {
+            title: 'Reorder Statements or Scope Borrows',
+            description: 'Finish reading from the immutable borrow before mutating the vector, or isolate references.',
+          },
+        ],
+        fixed_code: `fn main() {\n    let mut data = vec![1, 2, 3];\n    // Push first before creating immutable reference:\n    data.push(42);\n    let reference = &data;\n    println!("{:?}", reference);\n}`,
+        debug_steps: [
+          'Examine where the immutable borrow begins and where its last use is.',
+          'Reorder mutations before borrows or place borrows in isolated scopes.',
+        ],
+        confidence: 'high',
+      };
+    }
+
+    // Docker Port Binding Failure
+    if (errorText.includes('bind: address already in use') || errorText.includes('driver failed programming external connectivity')) {
+      return {
+        error_type: 'Docker Port Conflict Error',
+        severity: 'medium',
+        summary: 'Docker failed to bind container port because the host port is already occupied by another process.',
+        explanation:
+          'TCP ports can only be bound by a single listening process per network interface. The host port is already occupied by another running service.',
+        likely_cause: 'Another running container or local process (Node, Nginx, or zombie Docker proxy) is using the same port.',
+        important_lines: ['listen tcp4 0.0.0.0:8080: bind: address already in use'],
+        possible_causes: [
+          'A background container or dangling container is still running.',
+          'A local dev server on host machine is occupying the port.',
+          'Zombie Docker proxy process held onto the port.',
+        ],
+        solutions: [
+          {
+            title: 'Identify & Terminate Conflicting Process or Remap Port',
+            description: 'Find which process is using the port and stop it, or remap host port in docker-compose / docker run.',
+          },
+        ],
+        fixed_code: `# In docker-compose.yml or docker run, map to an alternate free port:\nports:\n  - "8081:8080" # Map host 8081 to container 8080`,
+        debug_steps: [
+          'Windows: netstat -ano | findstr :8080, then taskkill /PID <PID> /F',
+          'Linux/macOS: lsof -i :8080 or fuser -k 8080/tcp',
+          'Stop existing containers: docker ps && docker stop <container_id>',
+        ],
+        confidence: 'high',
+      };
+    }
+
+    // PostgreSQL Unique Constraint Violation
+    if (errorText.includes('violates unique constraint') || errorText.includes('duplicate key value')) {
+      return {
+        error_type: 'PostgreSQL Unique Constraint Violation (23505)',
+        severity: 'medium',
+        summary: 'An INSERT or UPDATE query attempted to insert duplicate data into a UNIQUE indexed column.',
+        explanation:
+          'The database table schema enforces uniqueness on the specified column (such as email or username), and a matching record already exists.',
+        likely_cause: 'Attempted to register or insert a user record whose email address already exists in the table.',
+        important_lines: ['ERROR: duplicate key value violates unique constraint "users_email_key"'],
+        possible_causes: [
+          'User already exists with that email address.',
+          'Concurrent registration requests sent simultaneously.',
+          'Missing ON CONFLICT / UPSERT handling in SQL statement.',
+        ],
+        solutions: [
+          {
+            title: 'Use ON CONFLICT (UPSERT) or Validate Before Insert',
+            description: 'Handle duplicate values gracefully with ON CONFLICT DO UPDATE or return a 409 Conflict status.',
+          },
+        ],
+        fixed_code: `-- PostgreSQL Upsert Pattern:\nINSERT INTO users (name, email)\nVALUES ('Alex', 'dev@example.com')\nON CONFLICT (email)\nDO UPDATE SET name = EXCLUDED.name, updated_at = NOW();`,
+        debug_steps: [
+          "Check existing records with: SELECT * FROM users WHERE email = 'dev@example.com';",
+          'Add try/catch around DB insert and return 409 Conflict to client.',
+        ],
+        confidence: 'high',
+      };
+    }
+
     // Generic fallback mock response
     return {
       error_type: input.language ? `${input.language} Error` : 'Runtime Error',
