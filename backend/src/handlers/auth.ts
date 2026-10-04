@@ -29,11 +29,17 @@ export function googleAuthHandler(req: AuthenticatedRequest, res: Response, next
     }
 
     if (!userEmail) {
-      throw AppError.badRequest('Valid Google email address is required.');
+      throw AppError.badRequest('Google email address is required.');
+    }
+
+    const isGoogleAccount = /^[a-zA-Z0-9._%+-]+@(gmail\.com|googlemail\.com)$/i.test(userEmail.trim());
+    if (!isGoogleAccount) {
+      throw AppError.badRequest('Only valid Google (@gmail.com) email addresses are allowed for Google Sign-In.');
     }
 
     gId = gId || `gid_${Buffer.from(userEmail).toString('hex').slice(0, 12)}`;
     userName = userName || userEmail.split('@')[0];
+
 
     const user = AuthRepository.upsertGoogleUser(gId, userEmail, userName, userPicture);
     const token = AuthRepository.generateToken({

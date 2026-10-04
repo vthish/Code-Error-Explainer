@@ -19,11 +19,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoading(true);
     setError(null);
     try {
-      const email = emailInput.trim() || 'user@example.com';
-      const name = email.split('@')[0].replace(/[._-]/g, ' ');
+      const email = emailInput.trim().toLowerCase();
+      if (!email) {
+        setError('Please enter your Google (@gmail.com) email address.');
+        setLoading(false);
+        return;
+      }
+
+      const isGmail = /^[a-zA-Z0-9._%+-]+@(gmail\.com|googlemail\.com)$/i.test(email);
+      if (!isGmail) {
+        setError('Please enter a valid Google Account (@gmail.com or @googlemail.com) email address.');
+        setLoading(false);
+        return;
+      }
+
+      const namePart = email.split('@')[0].replace(/[._-]/g, ' ');
+      const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+
       await loginWithGoogle({
         email,
-        name: name.charAt(0).toUpperCase() + name.slice(1),
+        name: formattedName,
         picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`,
         googleId: `google_${Date.now()}`,
       });
@@ -34,6 +49,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setLoading(false);
     }
   };
+
 
   const handleDemoLogin = async () => {
     setLoading(true);
