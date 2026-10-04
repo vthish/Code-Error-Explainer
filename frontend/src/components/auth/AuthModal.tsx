@@ -19,16 +19,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoading(true);
     setError(null);
     try {
-      const email = emailInput.trim().toLowerCase();
+      let email = emailInput.trim().toLowerCase();
       if (!email) {
-        setError('Please enter your Google (@gmail.com) email address.');
-        setLoading(false);
-        return;
+        const prompted = window.prompt("Google Sign-In:\nPlease enter your Gmail address (e.g. yourname@gmail.com):");
+        if (!prompted) {
+          setLoading(false);
+          return;
+        }
+        email = prompted.trim().toLowerCase();
       }
 
       const isGmail = /^[a-zA-Z0-9._%+-]+@(gmail\.com|googlemail\.com)$/i.test(email);
       if (!isGmail) {
-        setError('Please enter a valid Google Account (@gmail.com or @googlemail.com) email address.');
+        setError('Only valid Google accounts (@gmail.com / @googlemail.com) are allowed.');
         setLoading(false);
         return;
       }
@@ -49,7 +52,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setLoading(false);
     }
   };
-
 
   const handleDemoLogin = async () => {
     setLoading(true);
@@ -109,12 +111,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
           <div className="space-y-3">
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Enter your Google Account Email:
+              Google Account Sign-In (@gmail.com):
             </label>
             <div className="flex space-x-2">
               <input
                 type="email"
-                placeholder="alex@gmail.com"
+                placeholder="yourname@gmail.com"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
                 className="flex-1 bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
@@ -136,16 +138,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
           </div>
 
-          <button
-            onClick={handleDemoLogin}
-            disabled={loading}
-            className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-medium py-2.5 px-4 rounded-xl text-sm border border-slate-300 dark:border-slate-700 transition-colors flex items-center justify-center space-x-2"
-          >
-            <UserCheck className="w-4 h-4 text-emerald-500" />
-            <span>One-Click Developer Demo Sign In</span>
-          </button>
+          <div>
+            <button
+              onClick={handleDemoLogin}
+              disabled={loading}
+              className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-medium py-2.5 px-4 rounded-xl text-sm border border-slate-300 dark:border-slate-700 transition-colors flex items-center justify-center space-x-2"
+            >
+              <UserCheck className="w-4 h-4 text-emerald-500" />
+              <span>One-Click Developer Demo Sign In</span>
+            </button>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center mt-1.5">
+              (Demo Sign In lets you test private history saving instantly without entering any email!)
+            </p>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
