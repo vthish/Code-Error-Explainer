@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../../services/api';
 import { AIAnalysisResult } from '../../types';
 import { Bot, Send, User, ChevronDown, ChevronUp, Sparkles, X, Minimize2, ExternalLink } from 'lucide-react';
@@ -26,12 +27,11 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFloating, setIsFloating] = useState(false);
   const [isFloatingMinimized, setIsFloatingMinimized] = useState(false);
-  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const floatingMessagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Use container.scrollTo instead of window-level scrollIntoView to prevent mobile keyboard layout displacement
+  // Smooth internal container scroll (never scrolls the window or body)
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTo({
@@ -47,33 +47,22 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
     }
   };
 
-  // Track visualViewport for mobile virtual keyboard height adaptation
+  // Lock body scroll only when modal is actively open on mobile
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleViewportChange = () => {
-      if (window.visualViewport) {
-        setViewportHeight(window.visualViewport.height);
-      }
-    };
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportChange);
-      window.visualViewport.addEventListener('scroll', handleViewportChange);
-      setViewportHeight(window.visualViewport.height);
+    if (typeof document === 'undefined') return;
+    if (isFloating && !isFloatingMinimized) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
-
     return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleViewportChange);
-        window.visualViewport.removeEventListener('scroll', handleViewportChange);
-      }
+      document.body.style.overflow = '';
     };
-  }, []);
+  }, [isFloating, isFloatingMinimized]);
 
   useEffect(() => {
     if (isExpanded || (isFloating && !isFloatingMinimized)) {
-      setTimeout(() => scrollToBottom('auto'), 50);
+      setTimeout(() => scrollToBottom('auto'), 60);
     }
   }, [messages, isExpanded, isFloating, isFloatingMinimized]);
 
@@ -113,14 +102,24 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
     }
   };
 
-  const handleOpenChat = () => {
-    // If on a mobile phone (viewport < 768px), open directly in the sleek Pop-up Window!
+  const handleToggleCardChat = () => {
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setIsFloating(true);
-      setIsFloatingMinimized(false);
+      // On mobile: toggle pop-up modal
+      if (isFloating && !isFloatingMinimized) {
+        setIsFloating(false);
+      } else {
+        setIsFloating(true);
+        setIsFloatingMinimized(false);
+      }
     } else {
+      // On desktop: toggle inline expansion
       setIsExpanded(!isExpanded);
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsFloating(false);
+    setIsFloatingMinimized(false);
   };
 
   const QUICK_PROMPTS = [
@@ -132,12 +131,12 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
 
   return (
     <>
-      {/* 1. Main Inline Chat Card */}
+      {/* 1. Main Inline Chat Card on the Page */}
       <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg transition-all">
-        {/* Header Bar */}
+        {/* Card Header Bar */}
         <div className="px-3.5 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-emerald-600/10 via-teal-600/10 to-indigo-600/10 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 transition-colors">
           <div
-            onClick={handleOpenChat}
+            onClick={handleToggleCardChat}
             className="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer flex-1 min-w-0"
           >
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0">
@@ -157,33 +156,33 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
           </div>
 
           <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-            {/* Pop-up Mode Button */}
+            {/* Pop-up Mode Button (Desktop) */}
             <button
               type="button"
               onClick={() => {
                 setIsFloating(true);
                 setIsFloatingMinimized(false);
               }}
-              title="Pop up as dedicated chat window"
-              className="text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 shadow-sm hover:bg-emerald-50 dark:hover:bg-slate-700 flex items-center gap-1 transition-colors"
+              title="Open as floating window"
+              className="hidden sm:flex text-xs font-semibold px-2 sm:px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 shadow-sm hover:bg-emerald-50 dark:hover:bg-slate-700 items-center gap-1 transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span className="text-[11px]">Pop-up</span>
             </button>
 
-            {/* Expand / Collapse Button (desktop only) */}
+            {/* Chat Action Button */}
             <button
               type="button"
-              onClick={handleOpenChat}
-              className="text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm flex items-center gap-1 transition-colors shrink-0"
+              onClick={handleToggleCardChat}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm flex items-center gap-1 transition-colors shrink-0"
             >
-              <span>Chat</span>
-              {isExpanded ? <ChevronUp className="w-3.5 h-3.5 hidden sm:inline" /> : <ChevronDown className="w-3.5 h-3.5 hidden sm:inline" />}
+              <span>{isExpanded || (isFloating && !isFloatingMinimized) ? 'Collapse' : 'Chat'}</span>
+              {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
 
-        {/* Expandable Chat Body (Desktop Inline Mode) */}
+        {/* Desktop Inline Chat Stream */}
         {isExpanded && (
           <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
             {/* Quick Preset Prompts */}
@@ -275,26 +274,25 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
         )}
       </div>
 
-      {/* 2. Pop-up Chat Modal Window (Mobile Virtual Keyboard Adaptive) */}
-      {isFloating && (
-        <div
-          className="fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-50 flex flex-col justify-start sm:justify-end sm:items-end pointer-events-auto bg-black/70 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none"
-          style={
-            viewportHeight && typeof window !== 'undefined' && window.innerWidth < 640
-              ? { height: `${viewportHeight}px`, maxHeight: `${viewportHeight}px` }
-              : undefined
-          }
-        >
-          {!isFloatingMinimized ? (
-            <div className="w-full sm:w-[460px] h-full sm:h-[540px] max-h-full sm:max-h-[85vh] flex flex-col bg-white dark:bg-slate-900 border-b sm:border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md transition-all">
-              {/* Pop-up Header (Pinned at top) */}
-              <div className="shrink-0 px-3.5 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white flex items-center justify-between shadow-sm">
-                <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0 shadow-xs">
+      {/* 2. Pop-up Chat Modal Window (Rendered directly in body via Portal to avoid parent overflow clipping) */}
+      {typeof document !== 'undefined' &&
+        isFloating &&
+        !isFloatingMinimized &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-end sm:items-end pointer-events-auto bg-black/60 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none sm:p-5">
+            {/* Desktop Backdrop dismissal click */}
+            <div className="hidden sm:block absolute inset-0 -z-10" onClick={handleCloseModal} />
+
+            {/* Modal Container: Full-height on mobile (100dvh), compact box on desktop */}
+            <div className="w-full sm:w-[460px] h-[100dvh] sm:h-[540px] sm:max-h-[85vh] flex flex-col bg-slate-950 sm:bg-slate-900 border-none sm:border sm:border-slate-800 rounded-none sm:rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-150">
+              {/* Header: Pinned at top */}
+              <div className="shrink-0 h-14 px-3.5 sm:px-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white flex items-center justify-between shadow-md">
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0 shadow-xs">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-xs sm:text-sm font-bold flex items-center gap-1.5">
+                    <h3 className="text-xs sm:text-sm font-bold flex items-center gap-1.5 leading-tight">
                       <span>Error AI Assistant</span>
                       <span className="px-1.5 py-0.2 text-[9px] bg-white/25 rounded-full font-medium">Live</span>
                     </h3>
@@ -307,40 +305,40 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
                     type="button"
                     onClick={() => setIsFloatingMinimized(true)}
                     title="Minimize"
-                    className="p-1.5 rounded-lg hover:bg-white/20 text-white transition-colors"
+                    className="p-2 rounded-lg hover:bg-white/20 text-white transition-colors"
                   >
                     <Minimize2 className="w-4 h-4" />
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsFloating(false)}
-                    title="Close Pop-up"
-                    className="p-1.5 rounded-lg hover:bg-white/20 text-white transition-colors"
+                    onClick={handleCloseModal}
+                    title="Close"
+                    className="p-2 rounded-lg hover:bg-white/20 text-white transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Pop-up Quick Prompts: Horizontal swipeable chips on mobile */}
-              <div className="shrink-0 p-2 sm:p-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5 bg-slate-50/90 dark:bg-slate-950/60 overflow-x-auto no-scrollbar">
+              {/* Quick Prompts: Horizontal swipeable chips */}
+              <div className="shrink-0 px-3 py-2 border-b border-slate-800 flex items-center gap-1.5 bg-slate-900/90 overflow-x-auto no-scrollbar">
                 {QUICK_PROMPTS.map((item, idx) => (
                   <button
                     key={idx}
                     type="button"
                     disabled={isLoading}
                     onClick={() => handleSend(item.prompt)}
-                    className="text-[10px] sm:text-[11px] whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 transition-colors shadow-2xs shrink-0"
+                    className="text-[11px] whitespace-nowrap px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors shadow-2xs shrink-0"
                   >
                     {item.label}
                   </button>
                 ))}
               </div>
 
-              {/* Pop-up Messages Body with Auto-Scroll */}
+              {/* Messages Body: Flex-1, scrolls naturally without window movement */}
               <div
                 ref={floatingMessagesContainerRef}
-                className="flex-1 min-h-0 p-3.5 sm:p-4 space-y-3 overflow-y-auto scroll-smooth overscroll-contain"
+                className="flex-1 min-h-0 p-3.5 sm:p-4 space-y-3 overflow-y-auto overscroll-contain"
               >
                 {messages.map((msg, idx) => (
                   <div
@@ -348,23 +346,23 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
                     className={`flex items-start gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     {msg.role === 'assistant' && (
-                      <div className="w-6 h-6 rounded-md bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
                         <Bot className="w-3.5 h-3.5" />
                       </div>
                     )}
 
                     <div
-                      className={`max-w-[88%] sm:max-w-[85%] rounded-2xl px-3 sm:px-3.5 py-2 text-xs sm:text-sm leading-relaxed ${
+                      className={`max-w-[88%] sm:max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed ${
                         msg.role === 'user'
                           ? 'bg-emerald-600 text-white shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200'
+                          : 'bg-slate-800/90 border border-slate-700/60 text-slate-100'
                       }`}
                     >
                       <div className="whitespace-pre-wrap font-sans break-words">{msg.content}</div>
                     </div>
 
                     {msg.role === 'user' && (
-                      <div className="w-6 h-6 rounded-md bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 shrink-0 mt-0.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-700 flex items-center justify-center text-slate-200 shrink-0 mt-0.5">
                         <User className="w-3.5 h-3.5" />
                       </div>
                     )}
@@ -372,58 +370,66 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
                 ))}
 
                 {isLoading && (
-                  <div className="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400 pl-7 sm:pl-8">
+                  <div className="flex items-center space-x-2 text-xs text-slate-400 pl-8">
                     <div className="w-3.5 h-3.5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                     <span>AI is formulating answer...</span>
                   </div>
                 )}
               </div>
 
-              {/* Pop-up Input Bar: Stays pinned above keyboard */}
+              {/* Bottom Input Bar: Pinned directly above on-screen keyboard */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSend();
                 }}
-                className="shrink-0 p-2.5 sm:p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-1.5 sm:gap-2 shadow-lg"
+                className="shrink-0 p-3 border-t border-slate-800 bg-slate-950 flex items-center gap-2 shadow-lg"
               >
                 <input
                   type="text"
                   value={input}
                   onFocus={() => {
-                    setTimeout(() => scrollToBottom('smooth'), 120);
+                    setTimeout(() => scrollToBottom('smooth'), 150);
                   }}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask follow-up questions..."
                   disabled={isLoading}
-                  className="flex-1 px-3 py-2 sm:py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs sm:text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                 />
                 <button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5 transition-all shadow-sm shrink-0"
+                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-sm shrink-0"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Send</span>
                 </button>
               </form>
             </div>
-          ) : (
-            /* Minimized Floating Pill */
+          </div>,
+          document.body
+        )}
+
+      {/* 3. Minimized Floating Button (Clean small pill in bottom right, NO screen blocking backdrop) */}
+      {typeof document !== 'undefined' &&
+        isFloating &&
+        isFloatingMinimized &&
+        createPortal(
+          <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] pointer-events-auto">
             <button
               type="button"
               onClick={() => setIsFloatingMinimized(false)}
-              className="flex items-center gap-1.5 sm:gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs shadow-xl shadow-emerald-600/30 transition-all pointer-events-auto m-3 sm:m-0"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs shadow-2xl transition-all transform active:scale-95 hover:scale-105 border border-white/20"
             >
               <Bot className="w-4 h-4" />
               <span>Resume Chat</span>
               <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
             </button>
-          )}
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
-      {/* 3. Floating Quick-Launch Button (when popup is not open) */}
+      {/* 4. Floating Quick-Launch Button (when popup was never opened) */}
       {!isFloating && (
         <button
           type="button"
