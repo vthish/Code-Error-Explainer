@@ -66,24 +66,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoading(true);
     setError(null);
     try {
-      let email = emailInput.trim().toLowerCase();
-      
-      // Try Google GSI One Tap prompt if available
-      if (window.google?.accounts?.id) {
-        window.google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // If Google GSI overlay is dismissed, fallback to direct email login
-          }
-        });
-      }
+      const email = emailInput.trim().toLowerCase();
 
       if (!email) {
-        email = 'user.google@gmail.com'; // Default Google account if none typed
+        setError('Please enter your Gmail address (@gmail.com) in the box above.');
+        setLoading(false);
+        return;
       }
 
       const isGmail = /^[a-zA-Z0-9._%+-]+@(gmail\.com|googlemail\.com)$/i.test(email);
       if (!isGmail) {
-        setError('Only valid Google accounts (@gmail.com / @googlemail.com) are allowed.');
+        setError('Only valid Google accounts (@gmail.com or @googlemail.com) are allowed.');
         setLoading(false);
         return;
       }
@@ -104,6 +97,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setLoading(false);
     }
   };
+
 
 
   const handleDemoLogin = async () => {
