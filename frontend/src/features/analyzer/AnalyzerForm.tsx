@@ -71,27 +71,27 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
 
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Ctrl+Enter or Cmd+Enter submits form
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    // Pressing Enter (without Shift) OR Ctrl+Enter / Cmd+Enter automatically triggers form submission!
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xl backdrop-blur-md mb-8 transition-colors">
+    <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-6 shadow-xl backdrop-blur-md mb-8 transition-colors">
       {/* Sample Error Presets */}
       <div className="mb-5">
-        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+        <label className="block text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
           Try a Quick Example Error:
         </label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {SAMPLE_ERRORS.map((sample, idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => handleSampleClick(sample)}
-              className="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 transition-colors"
+              className="text-[11px] sm:text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 transition-colors"
             >
               {sample.name}
             </button>
@@ -103,9 +103,9 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
         {/* Main Error Textarea */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="error_text" className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-              Paste Error Log or Stack Trace <span className="text-rose-500 dark:text-rose-400">*</span>
-              <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400 ml-1">(Press Ctrl+Enter to submit)</span>
+            <label htmlFor="error_text" className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 flex flex-wrap items-center gap-1">
+              <span>Paste Error Log or Stack Trace <span className="text-rose-500 dark:text-rose-400">*</span></span>
+              <span className="text-[10px] sm:text-[11px] font-normal text-emerald-600 dark:text-emerald-400 ml-1">(Press Enter or Ctrl+Enter to analyze)</span>
             </label>
             {errorText && (
               <button
@@ -120,15 +120,15 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
 
           <textarea
             id="error_text"
-            rows={6}
+            rows={5}
             value={errorText}
             onKeyDown={handleKeyDown}
             onChange={(e) => {
               setErrorText(e.target.value);
               if (validationError) setValidationError('');
             }}
-            placeholder="TypeError: Cannot read properties of undefined (reading 'map')... or paste build logs, SQL errors, compiler output..."
-            className="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 font-mono text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all resize-y"
+            placeholder="TypeError: Cannot read properties of undefined (reading 'map')... or paste build logs, 200 OK, SQL errors..."
+            className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 font-mono text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all resize-y"
           />
 
           {validationError && (

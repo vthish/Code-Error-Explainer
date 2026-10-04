@@ -14,12 +14,21 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const savedUser = localStorage.getItem('auth_user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
+      setUser(null);
+      localStorage.removeItem('auth_user');
       setIsLoading(false);
       return;
     }
@@ -28,11 +37,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .getMe()
       .then((res) => {
         setUser(res.user);
+        localStorage.setItem('auth_user', JSON.stringify(res.user));
       })
-      .catch(() => {
-        // Clear invalid token
-        localStorage.removeItem('auth_token');
-        setUser(null);
+      .catch((err: any) => {
+        const message = String(err?.message || '');
+        // Only clear login state if backend explicitly rejected auth with 401 / Unauthorized
+        if (message.includes('401') || message.toLowerCase().includes('unauthorized')) {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+          setUser(null);
+        }
       })
       .finally(() => {
         setIsLoading(false);
@@ -41,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleAuthSuccess = (res: AuthResponse) => {
     localStorage.setItem('auth_token', res.token);
+    localStorage.setItem('auth_user', JSON.stringify(res.user));
     setUser(res.user);
   };
 
