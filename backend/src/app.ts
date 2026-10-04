@@ -16,6 +16,15 @@ export function createApp(): Express {
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
   app.use(rateLimiterMiddleware);
 
+  // Root health check endpoints for Render / load balancers
+  app.get('/', (_req, res) => {
+    res.status(200).json({ status: 'ok', service: 'Code Error Explainer Backend', timestamp: new Date().toISOString() });
+  });
+
+  app.get('/health', (_req, res) => {
+    res.status(200).json({ status: 'ok' });
+  });
+
   // Mount API routes
   app.use('/api', apiRouter);
 

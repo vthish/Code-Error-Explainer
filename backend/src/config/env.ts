@@ -8,7 +8,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 const envSchema = z.object({
   APP_ENV: z.enum(['development', 'production', 'test']).default('development'),
   APP_HOST: z.string().default('0.0.0.0'),
-  APP_PORT: z.coerce.number().default(3001),
+  APP_PORT: z.coerce.number().default(Number(process.env.PORT) || Number(process.env.APP_PORT) || 3001),
   FRONTEND_ORIGIN: z.string().default('http://localhost:5173'),
   
   DATABASE_PATH: z.string().default('./data/error_explainer.db'),

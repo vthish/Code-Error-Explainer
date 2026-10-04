@@ -5,6 +5,8 @@ services:
     buildCommand: cd backend && npm install && npm run build
     startCommand: cd backend && npm start
     envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
       - key: APP_ENV
         value: production
       - key: APP_HOST
@@ -19,7 +21,7 @@ services:
         generateValue: true
       - key: GOOGLE_CLIENT_ID
         sync: false
-    healthCheckPath: /api/health
+    healthCheckPath: /health
 
   - type: web
     name: code-error-explainer-frontend
@@ -38,4 +40,4 @@ services:
     name: render-14min-keepalive
     env: node
     schedule: "*/14 * * * *"
-    startCommand: "curl -s https://code-error-explainer-backend.onrender.com/api/health > /dev/null || true"
+    startCommand: "curl -s https://code-error-explainer-backend.onrender.com/health > /dev/null || true"
