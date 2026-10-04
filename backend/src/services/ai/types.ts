@@ -29,8 +29,23 @@ export interface AIAnalysisResult {
   confidence: ConfidenceLevel;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatContext {
+  error_text: string;
+  error_type?: string;
+  summary?: string;
+  likely_cause?: string;
+  fixed_code?: string | null;
+  language?: string;
+}
+
 export interface AIProvider {
   name: string;
   analyzeError(input: AnalysisInput): Promise<AIAnalysisResult>;
+  chat(context: ChatContext, messages: ChatMessage[]): Promise<string>;
   healthCheck(): Promise<boolean>;
 }

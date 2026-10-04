@@ -85,3 +85,38 @@ export async function reanalyzeHandler(req: AuthenticatedRequest, res: Response,
   }
 }
 
+export async function chatWithErrorHandler(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { context, messages } = req.body;
+    if (!context || !messages || !Array.isArray(messages) || messages.length === 0) {
+      throw AppError.badRequest('Context and at least one message are required.');
+    }
+
+    const aiProvider = getAIProvider();
+    const reply = await aiProvider.chat(context, messages);
+
+    res.status(200).json({ reply });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getPublicAnalysisHandler(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const rawId = req.params.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+    if (!id) {
+      throw AppError.badRequest('Analysis ID is required.');
+    }
+
+    const record = HistoryRepository.getAnalysisById(id);
+    if (!record) {
+      throw AppError.notFound('Shared analysis not found or has been removed.');
+    }
+
+    res.status(200).json(record);
+  } catch (error) {
+    next(error);
+  }
+}
+

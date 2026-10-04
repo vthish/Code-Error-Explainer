@@ -1,4 +1,4 @@
-import { AIProvider, AnalysisInput, AIAnalysisResult } from '../types.js';
+import { AIProvider, AnalysisInput, AIAnalysisResult, ChatContext, ChatMessage } from '../types.js';
 import { env } from '../../../config/env.js';
 import { buildSystemPrompt, buildUserPrompt } from '../prompt.js';
 import { parseAIResponse } from '../parser.js';
@@ -56,6 +56,47 @@ export class OpenAIProvider implements AIProvider {
     } finally {
       clearTimeout(timeoutId);
     }
+  }
+
+  async chat(context: ChatContext, messages: ChatMessage[]): Promise<string> {
+    if (!env.OPENAI_API_KEY) {
+      throw AppError.aiProviderError('OpenAI API key is missing.');
+    }
+
+    const systemPrompt = `You are an expert AI software debugging assistant helping a developer fix an error.
+Context:
+- Error Type: ${context.error_type || 'Unknown'}
+- Language: ${context.language || 'Auto-detected'}
+- Error Log: ${context.error_text}
+- Summary: ${context.summary || ''}
+- Likely Cause: ${context.likely_cause || ''}
+- Proposed Fix: ${context.fixed_code || 'N/A'}`;
+
+    const apiMessages = [
+      { role: 'system', content: systemPrompt },
+      ...messages.map((m) => ({ role: m.role, content: m.content })),
+    ];
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: env.OPENAI_MODEL,
+        messages: apiMessages,
+        temperature: 0.3,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw AppError.aiProviderError(`OpenAI chat request failed: ${err}`);
+    }
+
+    const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    return data.choices?.[0]?.message?.content || 'No response generated.';
   }
 
   async healthCheck(): Promise<boolean> {

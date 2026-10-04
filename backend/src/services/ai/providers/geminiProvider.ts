@@ -1,4 +1,4 @@
-import { AIProvider, AnalysisInput, AIAnalysisResult } from '../types.js';
+import { AIProvider, AnalysisInput, AIAnalysisResult, ChatContext, ChatMessage } from '../types.js';
 import { env } from '../../../config/env.js';
 import { buildSystemPrompt, buildUserPrompt } from '../prompt.js';
 import { parseAIResponse } from '../parser.js';
@@ -61,6 +61,55 @@ export class GeminiProvider implements AIProvider {
     } finally {
       clearTimeout(timeoutId);
     }
+  }
+
+  async chat(context: ChatContext, messages: ChatMessage[]): Promise<string> {
+    if (!env.GEMINI_API_KEY) {
+      throw AppError.aiProviderError('Gemini API key is missing. Set GEMINI_API_KEY in environment.');
+    }
+
+    const systemPrompt = `You are an expert AI software debugging assistant helping a developer fix an error.
+Context:
+- Error Type: ${context.error_type || 'Unknown'}
+- Language: ${context.language || 'Auto-detected'}
+- Error Log: ${context.error_text}
+- Summary: ${context.summary || ''}
+- Likely Cause: ${context.likely_cause || ''}
+- Proposed Fix: ${context.fixed_code || 'N/A'}
+
+Provide concise, friendly, and practical developer assistance. Use markdown code snippets with language tags where appropriate.`;
+
+    const contents = [
+      {
+        role: 'user',
+        parts: [{ text: systemPrompt }],
+      },
+      {
+        role: 'model',
+        parts: [{ text: 'Understood. I have reviewed the error analysis and am ready to answer any questions or help you debug.' }],
+      },
+      ...messages.map((m) => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }],
+      })),
+    ];
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL}:generateContent?key=${env.GEMINI_API_KEY}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents, generationConfig: { temperature: 0.3 } }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw AppError.aiProviderError(`Gemini chat failed: ${err}`);
+    }
+
+    const data = (await response.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
   }
 
   async healthCheck(): Promise<boolean> {

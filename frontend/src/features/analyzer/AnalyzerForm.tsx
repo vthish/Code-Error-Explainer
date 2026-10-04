@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AnalysisInput } from '../../types';
 import { SAMPLE_ERRORS, SUPPORTED_LANGUAGES, SUPPORTED_FRAMEWORKS, SUPPORTED_ENVIRONMENTS, SUPPORTED_OS } from '../../utils/samples';
-import { Sparkles, Code, ChevronDown, ChevronUp, RotateCcw, AlertCircle } from 'lucide-react';
+import { Sparkles, Code, ChevronDown, ChevronUp, RotateCcw, AlertCircle, Upload, FileText, X } from 'lucide-react';
 
 interface AnalyzerFormProps {
   onSubmit: (input: AnalysisInput) => void;
@@ -29,8 +29,48 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
     setValidationError('');
   };
 
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const processFile = (file: File) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setValidationError('File size exceeds the 2MB limit. Please upload a smaller log file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        setErrorText(content);
+        setUploadedFileName(file.name);
+        setValidationError('');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
   const handleClear = () => {
     setErrorText('');
+    setUploadedFileName(null);
     setLanguage('');
     setFramework('');
     setEnvironment('');
@@ -38,6 +78,7 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
     setCodeContext('');
     setShowCodeContext(false);
     setValidationError('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = (e?: React.FormEvent) => {
@@ -107,29 +148,90 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
               <span>Paste Error Log or Stack Trace <span className="text-rose-500 dark:text-rose-400">*</span></span>
               <span className="text-[10px] sm:text-[11px] font-normal text-emerald-600 dark:text-emerald-400 ml-1">(Press Enter or Ctrl+Enter to analyze)</span>
             </label>
-            {errorText && (
+            <div className="flex items-center space-x-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".log,.txt,.err,.json"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
               <button
                 type="button"
-                onClick={handleClear}
-                className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                title="Upload .log or .txt file"
               >
-                <RotateCcw className="w-3 h-3" /> Clear
+                <Upload className="w-3.5 h-3.5" />
+                <span>Upload File</span>
               </button>
-            )}
+
+              {errorText && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1"
+                >
+                  <RotateCcw className="w-3 h-3" /> Clear
+                </button>
+              )}
+            </div>
           </div>
 
-          <textarea
-            id="error_text"
-            rows={5}
-            value={errorText}
-            onKeyDown={handleKeyDown}
-            onChange={(e) => {
-              setErrorText(e.target.value);
-              if (validationError) setValidationError('');
+          {/* Uploaded File Chip */}
+          {uploadedFileName && (
+            <div className="mb-2 flex items-center justify-between p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-xs text-emerald-800 dark:text-emerald-300">
+              <div className="flex items-center space-x-2">
+                <FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="font-mono font-medium">{uploadedFileName}</span>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400">(Loaded into analyzer)</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setUploadedFileName(null);
+                  setErrorText('');
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                className="p-1 rounded hover:bg-emerald-200/50 dark:hover:bg-emerald-900/50"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Drag & Drop Zone around textarea */}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
             }}
-            placeholder="TypeError: Cannot read properties of undefined (reading 'map')... or paste build logs, 200 OK, SQL errors..."
-            className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 font-mono text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all resize-y"
-          />
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleFileDrop}
+            className={`relative rounded-lg transition-all ${
+              isDragging ? 'ring-2 ring-emerald-500 bg-emerald-50/10' : ''
+            }`}
+          >
+            {isDragging && (
+              <div className="absolute inset-0 bg-emerald-500/10 backdrop-blur-xs border-2 border-dashed border-emerald-500 rounded-lg flex items-center justify-center z-10 pointer-events-none">
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                  <Upload className="w-4 h-4" /> Drop log file to analyze
+                </span>
+              </div>
+            )}
+            <textarea
+              id="error_text"
+              rows={5}
+              value={errorText}
+              onKeyDown={handleKeyDown}
+              onChange={(e) => {
+                setErrorText(e.target.value);
+                if (validationError) setValidationError('');
+              }}
+              placeholder="TypeError: Cannot read properties of undefined (reading 'map')... or paste build logs, 200 OK, SQL errors, or drag & drop a .log file here"
+              className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 font-mono text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all resize-y"
+            />
+          </div>
 
           {validationError && (
             <div className="mt-2 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1.5">

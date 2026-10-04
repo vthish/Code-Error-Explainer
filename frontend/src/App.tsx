@@ -10,6 +10,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { AnalyzerPage } from './pages/AnalyzerPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { AboutPage } from './pages/AboutPage';
+import { SharedAnalysisPage } from './pages/SharedAnalysisPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 const queryClient = new QueryClient({
@@ -35,6 +36,7 @@ export const App: React.FC = () => {
                     <Route path="/" element={<AnalyzerPage />} />
                     <Route path="/history" element={<HistoryPage />} />
                     <Route path="/about" element={<AboutPage />} />
+                    <Route path="/share/:id" element={<SharedAnalysisPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </ErrorBoundary>

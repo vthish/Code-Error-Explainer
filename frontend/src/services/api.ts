@@ -95,6 +95,17 @@ class ApiService {
     });
   }
 
+  async chatWithError(context: any, messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<{ reply: string }> {
+    return this.request<{ reply: string }>('/analyses/chat', {
+      method: 'POST',
+      body: JSON.stringify({ context, messages }),
+    });
+  }
+
+  async getPublicAnalysis(id: string): Promise<AnalysisRecordDTO> {
+    return this.request<AnalysisRecordDTO>(`/analyses/public/${id}`);
+  }
+
   async getMe(): Promise<{ user: User }> {
     return this.request<{ user: User }>('/auth/me');
   }

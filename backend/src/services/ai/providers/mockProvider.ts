@@ -1,4 +1,4 @@
-import { AIProvider, AnalysisInput, AIAnalysisResult } from '../types.js';
+import { AIProvider, AnalysisInput, AIAnalysisResult, ChatContext, ChatMessage } from '../types.js';
 
 export class MockAIProvider implements AIProvider {
   public readonly name = 'mock';
@@ -335,6 +335,24 @@ export class MockAIProvider implements AIProvider {
     };
   }
 
+
+  async chat(context: ChatContext, messages: ChatMessage[]): Promise<string> {
+    const lastUserMessage = messages.filter((m) => m.role === 'user').pop()?.content.toLowerCase() || '';
+
+    if (lastUserMessage.includes('test') || lastUserMessage.includes('prevent')) {
+      return `### Automated Test to Prevent this Error\n\nHere is a test case you can add to your test suite to safeguard against this regression:\n\n\`\`\`${(context.language || 'typescript').toLowerCase()}\n// Regression test for ${context.error_type || 'error'}\ndescribe('Error Guard: ${context.error_type || 'edge case'}', () => {\n  it('should handle missing, null, or empty payloads gracefully', () => {\n    const testInput = null;\n    expect(() => {\n      // Execute safe handler\n      const result = testInput ?? 'fallback_value';\n      expect(result).toBeDefined();\n    }).not.toThrow();\n  });\n});\n\`\`\`\n\n**Best Practice:** Always run your unit tests in your CI/CD pipeline before merging to production.`;
+    }
+
+    if (lastUserMessage.includes('explain') || lastUserMessage.includes('simple') || lastUserMessage.includes('junior')) {
+      return `### Simple Explanation (In Plain English)\n\nImagine you are looking for a house at an address that doesn't exist on the map. Instead of asking for directions, the computer stops running and throws an error:\n\n* **What happened:** The code tried to read a property or key that wasn't created yet.\n* **The Root Cause:** \`${context.likely_cause || 'The expected data was missing at runtime'}\`\n* **The Quick Fix:** Always check if the object exists first before accessing nested fields (using \`?.\` in JS/TS or \`.get()\` in Python).`;
+    }
+
+    if (lastUserMessage.includes('install') || lastUserMessage.includes('command') || lastUserMessage.includes('terminal')) {
+      return `### Terminal Commands & Dependency Fixes\n\nDepending on your package manager, run the appropriate command in your terminal:\n\n\`\`\`bash\n# If Node.js / npm:\nnpm install\nnpm run build\n\n# If Python / pip:\npip install -r requirements.txt\n\n# If Docker:\ndocker compose down && docker compose up --build -d\n\`\`\`\n\nAfter running the command, restart your local development server to load the changes.`;
+    }
+
+    return `### AI Debugging Assistance for **${context.error_type || 'this error'}**\n\nTo resolve this effectively:\n\n1. **Inspect the source line:** Check the exact line where the crash happened: \`${context.likely_cause || 'check stack trace'}\`\n2. **Apply the defensive fix:**\n\`\`\`${(context.language || 'javascript').toLowerCase()}\n${context.fixed_code || '// Verify input data before execution\nif (!data) return null;'}\n\`\`\`\n3. **Verify in development:** Run your dev server and verify with invalid or edge-case test payloads.\n\nLet me know if you would like me to generate specific unit tests, Docker configs, or refactored code!`;
+  }
 
   async healthCheck(): Promise<boolean> {
     return true;

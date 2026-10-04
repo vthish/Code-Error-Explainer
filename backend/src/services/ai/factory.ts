@@ -16,17 +16,32 @@ export function getAIProvider(): AIProvider {
   const providerType = env.AI_PROVIDER;
 
   switch (providerType) {
-    case 'openai':
-      logger.info('Initializing OpenAI AI Provider');
-      cachedProvider = new OpenAIProvider();
-      break;
     case 'gemini':
-      logger.info('Initializing Google Gemini AI Provider');
-      cachedProvider = new GeminiProvider();
+      if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim() !== '' && !env.GEMINI_API_KEY.includes('your_gemini')) {
+        logger.info('Initializing Google Gemini AI Provider');
+        cachedProvider = new GeminiProvider();
+      } else {
+        logger.warn('Gemini API key not provided or placeholder used. Seamlessly using smart Mock AI Provider.');
+        cachedProvider = new MockAIProvider();
+      }
+      break;
+    case 'openai':
+      if (env.OPENAI_API_KEY && env.OPENAI_API_KEY.trim() !== '' && !env.OPENAI_API_KEY.includes('your_openai')) {
+        logger.info('Initializing OpenAI AI Provider');
+        cachedProvider = new OpenAIProvider();
+      } else {
+        logger.warn('OpenAI API key not provided. Seamlessly using smart Mock AI Provider.');
+        cachedProvider = new MockAIProvider();
+      }
       break;
     case 'anthropic':
-      logger.info('Initializing Anthropic Claude AI Provider');
-      cachedProvider = new AnthropicProvider();
+      if (env.ANTHROPIC_API_KEY && env.ANTHROPIC_API_KEY.trim() !== '' && !env.ANTHROPIC_API_KEY.includes('your_anthropic')) {
+        logger.info('Initializing Anthropic Claude AI Provider');
+        cachedProvider = new AnthropicProvider();
+      } else {
+        logger.warn('Anthropic API key not provided. Seamlessly using smart Mock AI Provider.');
+        cachedProvider = new MockAIProvider();
+      }
       break;
     case 'mock':
     default:

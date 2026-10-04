@@ -1,4 +1,4 @@
-import { AIProvider, AnalysisInput, AIAnalysisResult } from '../types.js';
+import { AIProvider, AnalysisInput, AIAnalysisResult, ChatContext, ChatMessage } from '../types.js';
 import { env } from '../../../config/env.js';
 import { buildSystemPrompt, buildUserPrompt } from '../prompt.js';
 import { parseAIResponse } from '../parser.js';
@@ -55,6 +55,46 @@ export class AnthropicProvider implements AIProvider {
     } finally {
       clearTimeout(timeoutId);
     }
+  }
+
+  async chat(context: ChatContext, messages: ChatMessage[]): Promise<string> {
+    if (!env.ANTHROPIC_API_KEY) {
+      throw AppError.aiProviderError('Anthropic API key is missing.');
+    }
+
+    const systemPrompt = `You are an expert AI software debugging assistant helping a developer fix an error.
+Context:
+- Error Type: ${context.error_type || 'Unknown'}
+- Language: ${context.language || 'Auto-detected'}
+- Error Log: ${context.error_text}
+- Summary: ${context.summary || ''}
+- Likely Cause: ${context.likely_cause || ''}
+- Proposed Fix: ${context.fixed_code || 'N/A'}`;
+
+    const apiMessages = messages.map((m) => ({ role: m.role, content: m.content }));
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: env.ANTHROPIC_MODEL,
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: apiMessages,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw AppError.aiProviderError(`Anthropic chat request failed: ${err}`);
+    }
+
+    const data = (await response.json()) as { content?: Array<{ text?: string }> };
+    return data.content?.[0]?.text || 'No response generated.';
   }
 
   async healthCheck(): Promise<boolean> {
