@@ -178,9 +178,9 @@ ${result.fixed_code}
       </div>
 
       {/* Summary & Root Cause Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {/* Plain-English Summary */}
-        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-2 shadow-sm transition-colors">
+        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-2 shadow-sm transition-colors">
           <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Summary
           </h3>
@@ -188,7 +188,7 @@ ${result.fixed_code}
         </div>
 
         {/* Likely Root Cause */}
-        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-2 shadow-sm transition-colors">
+        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-2 shadow-sm transition-colors">
           <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <HelpCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" /> Likely Cause
           </h3>
@@ -197,18 +197,18 @@ ${result.fixed_code}
       </div>
 
       {/* Detailed Explanation */}
-      <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-2 shadow-sm transition-colors">
+      <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-2 shadow-sm transition-colors">
         <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Detailed Explanation</h3>
         <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-line">{result.explanation}</p>
       </div>
 
       {/* Important Error Lines */}
       {result.important_lines && result.important_lines.length > 0 && (
-        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-2 shadow-sm transition-colors">
+        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-2 shadow-sm transition-colors">
           <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Key Error Lines Extracted</h3>
           <div className="space-y-1.5 font-mono text-xs">
             {result.important_lines.map((line, idx) => (
-              <div key={idx} className="p-2.5 rounded bg-rose-50 dark:bg-slate-950 border border-rose-200 dark:border-slate-800 text-rose-700 dark:text-rose-300">
+              <div key={idx} className="p-2.5 rounded bg-rose-50 dark:bg-slate-950 border border-rose-200 dark:border-slate-800 text-rose-700 dark:text-rose-300 break-all sm:break-normal">
                 {line}
               </div>
             ))}
@@ -218,13 +218,13 @@ ${result.fixed_code}
 
       {/* Recommended Solutions */}
       {result.solutions && result.solutions.length > 0 && (
-        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4 shadow-sm transition-colors">
+        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-4 shadow-sm transition-colors">
           <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Recommended Solutions
           </h3>
           <div className="space-y-3">
             {result.solutions.map((sol, idx) => (
-              <div key={idx} className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 space-y-1">
+              <div key={idx} className="p-3.5 sm:p-4 rounded-lg bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 space-y-1">
                 <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 text-sm">{sol.title}</h4>
                 <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">{sol.description}</p>
               </div>
@@ -251,12 +251,12 @@ ${result.fixed_code}
       <ErrorChatAssistant
         errorText={record.error_text}
         result={result}
-        language={record.language}
+        language={record.language || undefined}
       />
 
       {/* Step-by-Step Debugging Checklist */}
       {result.debug_steps && result.debug_steps.length > 0 && (
-        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-3 shadow-sm transition-colors">
+        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-3 shadow-sm transition-colors">
           <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <ListChecks className="w-4 h-4 text-indigo-600 dark:text-indigo-400" /> Step-by-Step Debugging Checklist
           </h3>
@@ -272,7 +272,7 @@ ${result.fixed_code}
       )}
 
       {/* Developer Community & Search Guide */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-slate-100 to-indigo-500/10 dark:from-amber-950/20 dark:via-slate-900 dark:to-indigo-950/20 border border-amber-300/40 dark:border-slate-800 rounded-xl p-5 space-y-4 shadow-md transition-colors">
+      <div className="bg-gradient-to-r from-amber-500/10 via-slate-100 to-indigo-500/10 dark:from-amber-950/20 dark:via-slate-900 dark:to-indigo-950/20 border border-amber-300/40 dark:border-slate-800 rounded-xl p-3.5 sm:p-5 space-y-4 shadow-md transition-colors">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
