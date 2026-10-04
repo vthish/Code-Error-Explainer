@@ -139,7 +139,7 @@ export const AnalyzerResult: React.FC<AnalyzerResultProps> = ({ record }) => {
           </h3>
           <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
             {result.debug_steps.map((step, idx) => (
-              <div key={idx} className="flex items-start gap-2.5 p-2 rounded bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800/60">
+              <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800/60">
                 <ArrowRight className="w-4 h-4 text-indigo-600 dark:text-indigo-400 mt-0.5 shrink-0" />
                 <span>{step}</span>
               </div>
@@ -147,6 +147,50 @@ export const AnalyzerResult: React.FC<AnalyzerResultProps> = ({ record }) => {
           </div>
         </div>
       )}
+
+      {/* Developer Community & Stack Overflow Search Guide */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-slate-100 to-indigo-500/10 dark:from-amber-950/20 dark:via-slate-900 dark:to-indigo-950/20 border border-amber-300/40 dark:border-slate-800 rounded-xl p-5 space-y-4 shadow-md transition-colors">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <span className="p-1 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono text-xs">SO</span>
+              Stack Overflow & Community Debugging Guide
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+              Explore similar resolved threads, official documentation, and open-source solutions for this exact error.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={`https://stackoverflow.com/search?q=${encodeURIComponent(`${result.error_type} ${record.language || ''} ${result.important_lines?.[0] || ''}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-slate-950 transition-colors shadow-sm"
+            >
+              <span>Search Stack Overflow</span>
+            </a>
+
+            <a
+              href={`https://www.google.com/search?q=${encodeURIComponent(`${result.error_type} fix ${record.language || ''}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-colors"
+            >
+              <span>Search Google</span>
+            </a>
+
+            <a
+              href={`https://github.com/search?q=${encodeURIComponent(`${result.error_type} ${record.language || ''}`)}&type=issues`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-colors"
+            >
+              <span>GitHub Issues</span>
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
