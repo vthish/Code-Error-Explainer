@@ -21,16 +21,77 @@ const getQuickDetectedLanguage = (text: string): string | null => {
 };
 
 export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading }) => {
-  const [errorText, setErrorText] = useState('');
-  const [language, setLanguage] = useState('');
-  const [framework, setFramework] = useState('');
+  const [errorText, setErrorText] = useState(() => {
+    try {
+      return sessionStorage.getItem('draft_error_text') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [language, setLanguage] = useState(() => {
+    try {
+      return sessionStorage.getItem('draft_language') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [framework, setFramework] = useState(() => {
+    try {
+      return sessionStorage.getItem('draft_framework') || '';
+    } catch {
+      return '';
+    }
+  });
   const [environment, setEnvironment] = useState('');
   const [os, setOs] = useState('');
-  const [codeContext, setCodeContext] = useState('');
-  const [showCodeContext, setShowCodeContext] = useState(false);
+  const [codeContext, setCodeContext] = useState(() => {
+    try {
+      return sessionStorage.getItem('draft_code_context') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [showCodeContext, setShowCodeContext] = useState(() => {
+    try {
+      return Boolean(sessionStorage.getItem('draft_code_context'));
+    } catch {
+      return false;
+    }
+  });
   const [validationError, setValidationError] = useState('');
 
   const quickDetected = getQuickDetectedLanguage(errorText);
+
+  // Sync draft to sessionStorage so navigating to History or About never loses pasted input
+  React.useEffect(() => {
+    try {
+      if (errorText) {
+        sessionStorage.setItem('draft_error_text', errorText);
+      } else {
+        sessionStorage.removeItem('draft_error_text');
+      }
+    } catch {}
+  }, [errorText]);
+
+  React.useEffect(() => {
+    try {
+      if (codeContext) {
+        sessionStorage.setItem('draft_code_context', codeContext);
+      } else {
+        sessionStorage.removeItem('draft_code_context');
+      }
+    } catch {}
+  }, [codeContext]);
+
+  React.useEffect(() => {
+    try {
+      if (language) {
+        sessionStorage.setItem('draft_language', language);
+      } else {
+        sessionStorage.removeItem('draft_language');
+      }
+    } catch {}
+  }, [language]);
 
   const handleSampleClick = (sample: typeof SAMPLE_ERRORS[0]) => {
     setErrorText(sample.error_text);
@@ -92,6 +153,12 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
     setCodeContext('');
     setShowCodeContext(false);
     setValidationError('');
+    try {
+      sessionStorage.removeItem('draft_error_text');
+      sessionStorage.removeItem('draft_code_context');
+      sessionStorage.removeItem('draft_language');
+      sessionStorage.removeItem('draft_framework');
+    } catch {}
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -112,14 +179,6 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
       os: os || undefined,
       code_context: showCodeContext && codeContext.trim() ? codeContext.trim() : undefined,
     };
-
-    // Auto reset optional dropdown selections back to default for the next analysis
-    setLanguage('');
-    setFramework('');
-    setEnvironment('');
-    setOs('');
-    setCodeContext('');
-    setShowCodeContext(false);
 
     onSubmit(submittedInput);
   };
