@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { AnalysisInput, AnalysisRecordDTO } from '../types';
-import { api } from '../services/api';
+import React from 'react';
 import { AnalyzerForm } from '../features/analyzer/AnalyzerForm';
 import { AnalyzerResult } from '../features/analyzer/AnalyzerResult';
 import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { AlertCircle, Sparkles, RefreshCw } from 'lucide-react';
+import { useAnalysis } from '../context/AnalysisContext';
 
 function getFriendlyErrorMessage(raw: string): string {
   if (!raw) return 'Failed to analyze error. Please try again.';
@@ -30,67 +28,7 @@ function getFriendlyErrorMessage(raw: string): string {
 }
 
 export const AnalyzerPage: React.FC = () => {
-  const [record, setRecord] = useState<AnalysisRecordDTO | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [lastInput, setLastInput] = useState<AnalysisInput | null>(null);
-  const abortControllerRef = React.useRef<AbortController | null>(null);
-  const location = useLocation();
-
-  // Clear analysis and abort any in-flight request on unmount or navigation
-  React.useEffect(() => {
-    const handleClear = () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      setIsLoading(false);
-      setRecord(null);
-      setErrorMessage('');
-    };
-
-    window.addEventListener('clear-analyzer', handleClear);
-
-    return () => {
-      window.removeEventListener('clear-analyzer', handleClear);
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, []);
-
-  // When navigating back to analyzer, ensure clean initial state
-  React.useEffect(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  }, [location.pathname]);
-
-  const handleAnalyze = async (input: AnalysisInput) => {
-    // Abort previous pending analysis if any
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    setIsLoading(true);
-    setErrorMessage('');
-    setRecord(null);
-    setLastInput(input);
-
-    try {
-      const data = await api.analyzeError(input, controller.signal);
-      setRecord(data);
-    } catch (err: any) {
-      if (err?.name === 'AbortError' || err?.message?.includes('aborted')) {
-        // Navigation occurred or user canceled analysis
-        return;
-      }
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to analyze error.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { record, isLoading, errorMessage, lastInput, analyzeError } = useAnalysis();
 
   return (
     <div className="max-w-5xl mx-auto py-4 sm:py-10 px-3 sm:px-6">
@@ -109,7 +47,7 @@ export const AnalyzerPage: React.FC = () => {
       </div>
 
       {/* Input Form */}
-      <AnalyzerForm onSubmit={handleAnalyze} isLoading={isLoading} />
+      <AnalyzerForm onSubmit={analyzeError} isLoading={isLoading} />
 
       {/* API Error State Banner */}
       {errorMessage && (
@@ -121,7 +59,7 @@ export const AnalyzerPage: React.FC = () => {
               {lastInput && (
                 <button
                   type="button"
-                  onClick={() => handleAnalyze(lastInput)}
+                  onClick={() => analyzeError(lastInput)}
                   className="text-[11px] sm:text-xs font-medium text-rose-700 dark:text-rose-300 hover:underline flex items-center gap-1 bg-rose-100 dark:bg-rose-900/40 px-2 py-0.5 rounded transition-colors"
                 >
                   <RefreshCw className="w-3 h-3" /> Retry
@@ -139,7 +77,7 @@ export const AnalyzerPage: React.FC = () => {
       {isLoading && <LoadingSkeleton />}
 
       {/* Results View */}
-      {record && <AnalyzerResult record={record} />}
+      {record && !isLoading && <AnalyzerResult record={record} />}
     </div>
   );
 };

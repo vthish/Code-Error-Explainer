@@ -160,7 +160,28 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
       sessionStorage.removeItem('draft_framework');
     } catch {}
     if (fileInputRef.current) fileInputRef.current.value = '';
+    window.dispatchEvent(new CustomEvent('clear-analyzer'));
   };
+
+  React.useEffect(() => {
+    const handleClearEvent = () => {
+      setErrorText('');
+      setUploadedFileName(null);
+      setLanguage('');
+      setFramework('');
+      setEnvironment('');
+      setOs('');
+      setCodeContext('');
+      setShowCodeContext(false);
+      setValidationError('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    window.addEventListener('clear-analyzer', handleClearEvent);
+    return () => {
+      window.removeEventListener('clear-analyzer', handleClearEvent);
+    };
+  }, []);
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();

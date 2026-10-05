@@ -53,10 +53,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
   }, []);
 
+  const clearDraftAndAnalyzer = () => {
+    try {
+      sessionStorage.removeItem('draft_error_text');
+      sessionStorage.removeItem('draft_code_context');
+      sessionStorage.removeItem('draft_language');
+      sessionStorage.removeItem('draft_framework');
+    } catch {}
+    window.dispatchEvent(new CustomEvent('clear-analyzer'));
+  };
+
   const handleAuthSuccess = (res: AuthResponse) => {
     localStorage.setItem('auth_token', res.token);
     localStorage.setItem('auth_user', JSON.stringify(res.user));
     setUser(res.user);
+    // Reset draft and active analyzer state when user signs in from guest
+    clearDraftAndAnalyzer();
   };
 
   const loginWithGoogle = async (payload: { credential?: string; email?: string; name?: string; picture?: string; googleId?: string }) => {
@@ -81,7 +93,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
     setUser(null);
+    clearDraftAndAnalyzer();
   };
 
   return (
