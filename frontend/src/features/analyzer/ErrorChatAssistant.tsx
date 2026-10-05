@@ -30,6 +30,7 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const floatingMessagesContainerRef = useRef<HTMLDivElement>(null);
+  const quickPromptsRef = useRef<HTMLDivElement>(null);
 
   // Smooth internal container scroll (never scrolls the window or body)
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
@@ -47,17 +48,44 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
     }
   };
 
-  // Lock body scroll only when modal is actively open on mobile
+  // Robust mobile background scroll lock (prevents window & body scrolling underneath modal)
   useEffect(() => {
     if (typeof document === 'undefined') return;
+
     if (isFloating && !isFloatingMinimized) {
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
+
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      document.documentElement.style.overflow = 'hidden';
+
+      // Intercept touchmove on document to completely stop background page scrolling
+      const handleTouchMove = (e: TouchEvent) => {
+        const msgContainer = floatingMessagesContainerRef.current;
+        const promptContainer = quickPromptsRef.current;
+
+        // Allow internal scrolling only inside the messages container or horizontal prompts
+        if (
+          (msgContainer && msgContainer.contains(e.target as Node)) ||
+          (promptContainer && promptContainer.contains(e.target as Node))
+        ) {
+          return;
+        }
+
+        // Prevent touch gestures on backdrop, header, or buttons from moving the page underneath
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+      };
+
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+      return () => {
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalHtmlOverflow;
+        document.removeEventListener('touchmove', handleTouchMove);
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isFloating, isFloatingMinimized]);
 
   useEffect(() => {
@@ -280,20 +308,21 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
         !isFloatingMinimized &&
         createPortal(
           <div className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-end sm:items-end pointer-events-auto sm:p-5">
-            {/* Backdrop: Clicking outside sheet collapses/closes it */}
+            {/* Backdrop: Clicking outside sheet collapses/closes it, touch-none prevents background page scrolling */}
             <div
-              className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity duration-300"
+              className="absolute inset-0 bg-slate-950/75 backdrop-blur-xs animate-backdrop-fade touch-none"
               onClick={handleCloseModal}
+              onTouchMove={(e) => e.preventDefault()}
             />
 
-            {/* Modal Container: Modern slide-up bottom sheet on mobile (rounded-t-[32px]), floating card on desktop */}
-            <div className="relative z-10 w-full sm:w-[480px] h-[92dvh] sm:h-[580px] max-h-[92dvh] sm:max-h-[85vh] flex flex-col bg-slate-950 sm:bg-slate-900 border-t sm:border border-slate-700/80 sm:border-slate-800 rounded-t-[32px] sm:rounded-3xl shadow-[0_-12px_40px_rgba(0,0,0,0.7)] sm:shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 ease-out">
+            {/* Modal Container: Modern slide-up bottom sheet with buttery smooth hardware-accelerated cubic-bezier animation */}
+            <div className="relative z-10 w-full sm:w-[480px] h-[92dvh] sm:h-[580px] max-h-[92dvh] sm:max-h-[85vh] flex flex-col bg-slate-950 sm:bg-slate-900 border-t sm:border border-slate-700/80 sm:border-slate-800 rounded-t-[32px] sm:rounded-3xl shadow-[0_-12px_40px_rgba(0,0,0,0.7)] sm:shadow-2xl overflow-hidden animate-sheet-up">
               {/* Header Bar */}
-              <div className="shrink-0 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white flex flex-col shadow-md">
+              <div className="shrink-0 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white flex flex-col shadow-md touch-none">
                 {/* Mobile Drag Indicator Handle */}
                 <div
                   onClick={handleCloseModal}
-                  className="w-full sm:hidden pt-2.5 pb-1 flex justify-center cursor-pointer active:opacity-70 transition-opacity"
+                  className="w-full sm:hidden pt-2.5 pb-1 flex justify-center cursor-pointer active:opacity-70 transition-opacity touch-none"
                 >
                   <div className="w-12 h-1.5 bg-white/40 rounded-full" />
                 </div>
@@ -339,7 +368,10 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
               </div>
 
               {/* Quick Prompts: Horizontal swipeable chips */}
-              <div className="shrink-0 px-3.5 py-2.5 border-b border-slate-800 bg-slate-900/90 flex items-center gap-2 overflow-x-auto no-scrollbar">
+              <div
+                ref={quickPromptsRef}
+                className="shrink-0 px-3.5 py-2.5 border-b border-slate-800 bg-slate-900/90 flex items-center gap-2 overflow-x-auto no-scrollbar"
+              >
                 <span className="text-[11px] font-semibold text-slate-400 shrink-0 flex items-center gap-1 mr-0.5">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Prompts:
                 </span>
@@ -359,7 +391,8 @@ export const ErrorChatAssistant: React.FC<ErrorChatAssistantProps> = ({ errorTex
               {/* Messages Body */}
               <div
                 ref={floatingMessagesContainerRef}
-                className="flex-1 min-h-0 p-4 space-y-3.5 overflow-y-auto overscroll-contain bg-slate-950/40"
+                onScroll={(e) => e.stopPropagation()}
+                className="flex-1 min-h-0 p-4 space-y-3.5 overflow-y-auto overscroll-contain touch-contain bg-slate-950/40"
               >
                 {messages.map((msg, idx) => (
                   <div

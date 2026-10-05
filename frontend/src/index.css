@@ -48,3 +48,42 @@
 .glow-indigo {
   box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.15);
 }
+
+/* Buttery Smooth Sheet Animations with Hardware Acceleration */
+@keyframes sheetSlideUp {
+  0% {
+    transform: translate3d(0, 100%, 0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes backdropFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-sheet-up {
+  animation: sheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-backdrop-fade {
+  animation: backdropFadeIn 0.22s ease-out forwards;
+  will-change: opacity;
+}
+
+/* Custom utility to lock touch rubber-banding and scroll chaining */
+.touch-contain {
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
