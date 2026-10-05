@@ -126,6 +126,10 @@ ${result.fixed_code}
               <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${severityColor}`}>
                 {result.severity.toUpperCase()}
               </span>
+              <span className="px-2.5 py-0.5 text-xs font-mono font-medium rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>{record.language || result.detected_language || 'Auto-Detected'}</span>
+              </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">ID: {record.id}</p>
           </div>
@@ -242,7 +246,7 @@ ${result.fixed_code}
           <CodeDiffView
             originalCode={record.code_context || undefined}
             fixedCode={result.fixed_code}
-            language={record.language || 'Code Fix'}
+            language={record.language || result.detected_language || 'Code Fix'}
           />
         </div>
       )}
@@ -251,7 +255,7 @@ ${result.fixed_code}
       <ErrorChatAssistant
         errorText={record.error_text}
         result={result}
-        language={record.language || undefined}
+        language={record.language || result.detected_language || undefined}
       />
 
       {/* Step-by-Step Debugging Checklist */}

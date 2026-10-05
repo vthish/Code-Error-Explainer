@@ -40,8 +40,13 @@ export async function analyzeErrorHandler(req: AuthenticatedRequest, res: Respon
     const aiProvider = getAIProvider();
     const aiResult = await aiProvider.analyzeError(sanitizedInput);
 
-    // Persist analysis to database
-    const savedRecord = HistoryRepository.saveAnalysis(sanitizedInput, aiResult, userId);
+    // Persist analysis to database with auto-detected language if not explicitly provided
+    const effectiveLanguage = sanitizedInput.language || aiResult.detected_language || undefined;
+    const finalInput = {
+      ...sanitizedInput,
+      language: effectiveLanguage,
+    };
+    const savedRecord = HistoryRepository.saveAnalysis(finalInput, aiResult, userId);
 
     res.status(200).json(savedRecord);
   } catch (error) {

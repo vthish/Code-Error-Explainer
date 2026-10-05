@@ -33,17 +33,50 @@ export const AnalyzerPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [lastInput, setLastInput] = useState<AnalysisInput | null>(null);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
+
+  // Clear analysis and abort any in-flight request on unmount or navigation
+  React.useEffect(() => {
+    const handleClear = () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      setIsLoading(false);
+      setRecord(null);
+      setErrorMessage('');
+    };
+
+    window.addEventListener('clear-analyzer', handleClear);
+
+    return () => {
+      window.removeEventListener('clear-analyzer', handleClear);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleAnalyze = async (input: AnalysisInput) => {
+    // Abort previous pending analysis if any
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setIsLoading(true);
     setErrorMessage('');
     setRecord(null);
     setLastInput(input);
 
     try {
-      const data = await api.analyzeError(input);
+      const data = await api.analyzeError(input, controller.signal);
       setRecord(data);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === 'AbortError' || err?.message?.includes('aborted')) {
+        // Navigation occurred or user canceled analysis
+        return;
+      }
       setErrorMessage(err instanceof Error ? err.message : 'Failed to analyze error.');
     } finally {
       setIsLoading(false);

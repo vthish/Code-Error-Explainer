@@ -8,6 +8,18 @@ interface AnalyzerFormProps {
   isLoading: boolean;
 }
 
+const getQuickDetectedLanguage = (text: string): string | null => {
+  if (!text) return null;
+  if (/Traceback \(most recent call last\)|File ".*\.py"|KeyError:|IndentationError:|NameError:|ModuleNotFoundError:/i.test(text)) return 'Python';
+  if (/java\.lang\.|Exception in thread|NullPointerException|ClassNotFoundException|at .*\.java:\d+/i.test(text)) return 'Java';
+  if (/error\[E\d+\]|cargo build|cannot borrow .* as mutable/i.test(text)) return 'Rust';
+  if (/TypeError: Cannot read|ReferenceError:|SyntaxError: Unexpected token|at .*\.(js|ts|jsx|tsx):\d+/i.test(text)) return 'TypeScript / JS';
+  if (/panic: runtime error|goroutine \d+/i.test(text)) return 'Go';
+  if (/failed to solve with frontend dockerfile|Dockerfile:/i.test(text)) return 'Docker';
+  if (/syntax error at or near|ORA-\d+|psycopg2|sqlite3\.OperationalError/i.test(text)) return 'SQL';
+  return null;
+};
+
 export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading }) => {
   const [errorText, setErrorText] = useState('');
   const [language, setLanguage] = useState('');
@@ -17,6 +29,8 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
   const [codeContext, setCodeContext] = useState('');
   const [showCodeContext, setShowCodeContext] = useState(false);
   const [validationError, setValidationError] = useState('');
+
+  const quickDetected = getQuickDetectedLanguage(errorText);
 
   const handleSampleClick = (sample: typeof SAMPLE_ERRORS[0]) => {
     setErrorText(sample.error_text);
@@ -92,7 +106,7 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
     setValidationError('');
     const submittedInput = {
       error_text: errorText.trim(),
-      language: language || undefined,
+      language: language || quickDetected || undefined,
       framework: framework || undefined,
       environment: environment || undefined,
       os: os || undefined,
@@ -244,13 +258,20 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
         {/* Environment Details Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
           <div>
-            <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Language</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">Language</label>
+              {!language && quickDetected && (
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-medium truncate">
+                  Auto: {quickDetected}
+                </span>
+              )}
+            </div>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
               className="w-full px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
-              <option value="">Auto-Detect / Any</option>
+              <option value="">{quickDetected ? `Auto-Detect (${quickDetected})` : 'Auto-Detect / Any'}</option>
               {SUPPORTED_LANGUAGES.map((lang) => (
                 <option key={lang} value={lang}>
                   {lang}

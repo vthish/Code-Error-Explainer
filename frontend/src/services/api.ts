@@ -54,10 +54,11 @@ class ApiService {
     return this.request<{ status: string; environment: string; ai_provider: string }>('/health');
   }
 
-  async analyzeError(input: AnalysisInput): Promise<AnalysisRecordDTO> {
+  async analyzeError(input: AnalysisInput, signal?: AbortSignal): Promise<AnalysisRecordDTO> {
     return this.request<AnalysisRecordDTO>('/analyze', {
       method: 'POST',
       body: JSON.stringify(input),
+      signal,
     });
   }
 

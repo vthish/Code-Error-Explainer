@@ -16,6 +16,7 @@ JSON OUTPUT SCHEMA:
 {
   "error_type": "Syntax Error | Compilation Error | Runtime Error | Type Error | Dependency Error | Database Error | Network Error | Authentication Error | Authorization Error | Configuration Error | Environment Variable Error | Docker Error | Linux/System Error | API Error | Build Error | Package Manager Error | Framework Error | Unknown Error",
   "severity": "low | medium | high | critical",
+  "detected_language": "Detected programming language (e.g. Python, Java, JavaScript, TypeScript, Rust, Go, C++, C#, PHP, Ruby, Kotlin, Swift, Dart, SQL, Shell, Docker, etc.)",
   "summary": "Clear one-sentence summary of what went wrong",
   "explanation": "Detailed plain-English explanation of why the error occurred",
   "likely_cause": "The single most probable root cause",

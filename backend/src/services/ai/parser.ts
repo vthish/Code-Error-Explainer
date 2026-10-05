@@ -10,6 +10,7 @@ const solutionItemSchema = z.object({
 const aiAnalysisSchema = z.object({
   error_type: z.string().default('Runtime Error'),
   severity: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
+  detected_language: z.string().optional(),
   summary: z.string().default('An error occurred during application execution.'),
   explanation: z.string().default('The application encountered an unexpected runtime failure.'),
   likely_cause: z.string().default('Variable or payload state was invalid when evaluated.'),

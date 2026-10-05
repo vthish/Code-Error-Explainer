@@ -18,6 +18,7 @@ export type ConfidenceLevel = 'low' | 'medium' | 'high';
 export interface AIAnalysisResult {
   error_type: string;
   severity: ErrorSeverity;
+  detected_language?: string;
   summary: string;
   explanation: string;
   likely_cause: string;

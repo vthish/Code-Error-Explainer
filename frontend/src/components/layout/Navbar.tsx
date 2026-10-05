@@ -12,12 +12,17 @@ export const Navbar: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const handleNavClick = () => {
+    setIsMobileMenuOpen(false);
+    window.dispatchEvent(new CustomEvent('clear-analyzer'));
+  };
+
   return (
     <>
       <header className="sticky top-0 z-40 backdrop-blur-md bg-white/95 dark:bg-slate-950/90 border-b border-slate-200 dark:border-slate-800/80 transition-colors shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
-          <NavLink to="/" className="flex items-center gap-2 group shrink min-w-0" onClick={() => setIsMobileMenuOpen(false)}>
+          <NavLink to="/" className="flex items-center gap-2 group shrink min-w-0" onClick={handleNavClick}>
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
@@ -36,6 +41,7 @@ export const Navbar: React.FC = () => {
             <NavLink
               to="/"
               end
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
@@ -50,6 +56,7 @@ export const Navbar: React.FC = () => {
 
             <NavLink
               to="/history"
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
@@ -64,6 +71,7 @@ export const Navbar: React.FC = () => {
 
             <NavLink
               to="/about"
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
@@ -139,7 +147,7 @@ export const Navbar: React.FC = () => {
             <NavLink
               to="/"
               end
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium ${
                   isActive
@@ -154,7 +162,7 @@ export const Navbar: React.FC = () => {
 
             <NavLink
               to="/history"
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium ${
                   isActive
@@ -169,7 +177,7 @@ export const Navbar: React.FC = () => {
 
             <NavLink
               to="/about"
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium ${
                   isActive
