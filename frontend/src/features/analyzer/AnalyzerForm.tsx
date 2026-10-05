@@ -313,20 +313,26 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
           <button
             type="button"
             onClick={() => setShowCodeContext(!showCodeContext)}
-            className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5 transition-colors"
+            className="text-xs text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1.5 transition-colors font-medium"
           >
             <Code className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>{showCodeContext ? 'Hide Code Snippet Context' : '+ Add Optional Related Code Snippet'}</span>
+            <span>{showCodeContext ? 'Hide Broken Code Snippet' : '+ Add Broken Code Snippet (Enables Visual Patch Diff)'}</span>
+            <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
+              Diff Mode
+            </span>
             {showCodeContext ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
 
           {showCodeContext && (
-            <div className="mt-2">
+            <div className="mt-2 space-y-1">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Paste your original broken code snippet here to see an interactive side-by-side Git Diff patch (+ / -)!
+              </p>
               <textarea
                 rows={4}
                 value={codeContext}
                 onChange={(e) => setCodeContext(e.target.value)}
-                placeholder="Paste the surrounding function or code snippet where the error occurred..."
+                placeholder="Paste the surrounding function or broken code snippet where the error occurred..."
                 className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>

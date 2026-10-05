@@ -149,6 +149,13 @@ export const CodeDiffView: React.FC<CodeDiffViewProps> = ({ originalCode, fixedC
           </div>
         )}
       </div>
+
+      {/* Helpful Hint when Original Code was not provided */}
+      {!originalCode && (
+        <div className="px-3.5 py-2 bg-slate-950/70 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+          <span>💡 Paste your broken code snippet in the form to unlock the interactive side-by-side Git Diff (+ / -).</span>
+        </div>
+      )}
     </div>
   );
 };
