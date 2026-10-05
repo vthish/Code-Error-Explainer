@@ -40,6 +40,12 @@ export async function analyzeErrorHandler(req: AuthenticatedRequest, res: Respon
     const aiProvider = getAIProvider();
     const aiResult = await aiProvider.analyzeError(sanitizedInput);
 
+    // If client navigated away or aborted before AI completed, do not save to history
+    if (req.destroyed || req.socket?.destroyed) {
+      logger.info('Client aborted analysis request. Skipping persistence.');
+      return;
+    }
+
     // Persist analysis to database with auto-detected language if not explicitly provided
     const effectiveLanguage = sanitizedInput.language || aiResult.detected_language || undefined;
     const finalInput = {

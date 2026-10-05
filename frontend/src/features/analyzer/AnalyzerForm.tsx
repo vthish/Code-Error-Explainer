@@ -360,8 +360,21 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
           )}
         </div>
 
-        {/* Submit Action Button */}
-        <div className="pt-2 flex justify-end">
+        {/* Submit & Cancel Action Buttons */}
+        <div className="pt-2 flex flex-wrap items-center justify-end gap-2.5">
+          {isLoading && (
+            <button
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('clear-analyzer'));
+              }}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-rose-600 dark:text-rose-400 font-medium text-xs sm:text-sm border border-slate-300 dark:border-slate-700 transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+            >
+              <X className="w-4 h-4" />
+              <span>Cancel Analysis</span>
+            </button>
+          )}
+
           <button
             type="submit"
             disabled={isLoading}

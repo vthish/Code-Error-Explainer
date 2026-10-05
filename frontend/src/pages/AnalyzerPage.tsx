@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AnalysisInput, AnalysisRecordDTO } from '../types';
 import { api } from '../services/api';
 import { AnalyzerForm } from '../features/analyzer/AnalyzerForm';
@@ -33,7 +34,9 @@ export const AnalyzerPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [lastInput, setLastInput] = useState<AnalysisInput | null>(null);
+  const [formResetKey, setFormResetKey] = useState(0);
   const abortControllerRef = React.useRef<AbortController | null>(null);
+  const location = useLocation();
 
   // Clear analysis and abort any in-flight request on unmount or navigation
   React.useEffect(() => {
@@ -44,6 +47,7 @@ export const AnalyzerPage: React.FC = () => {
       setIsLoading(false);
       setRecord(null);
       setErrorMessage('');
+      setFormResetKey((prev) => prev + 1);
     };
 
     window.addEventListener('clear-analyzer', handleClear);
@@ -55,6 +59,13 @@ export const AnalyzerPage: React.FC = () => {
       }
     };
   }, []);
+
+  // When navigating back to analyzer, ensure clean initial state
+  React.useEffect(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  }, [location.pathname]);
 
   const handleAnalyze = async (input: AnalysisInput) => {
     // Abort previous pending analysis if any
@@ -100,7 +111,7 @@ export const AnalyzerPage: React.FC = () => {
       </div>
 
       {/* Input Form */}
-      <AnalyzerForm onSubmit={handleAnalyze} isLoading={isLoading} />
+      <AnalyzerForm key={formResetKey} onSubmit={handleAnalyze} isLoading={isLoading} />
 
       {/* API Error State Banner */}
       {errorMessage && (
