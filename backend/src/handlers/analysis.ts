@@ -4,6 +4,7 @@ import { createAnalysisSchema } from '../schemas/analysis.js';
 import { getAIProvider } from '../services/ai/factory.js';
 import { HistoryRepository } from '../services/history/repository.js';
 import { redactSensitiveData } from '../utils/redaction.js';
+import { detectLanguage } from '../utils/languageDetector.js';
 import { AppError } from '../errors/AppError.js';
 import { logger } from '../utils/logger.js';
 
@@ -41,7 +42,11 @@ export async function analyzeErrorHandler(req: AuthenticatedRequest, res: Respon
     const aiResult = await aiProvider.analyzeError(sanitizedInput);
 
     // Persist analysis to database with auto-detected language if not explicitly provided
-    const effectiveLanguage = sanitizedInput.language || aiResult.detected_language || undefined;
+    const detectedLang = sanitizedInput.language || aiResult.detected_language || detectLanguage(sanitizedInput.error_text, sanitizedInput.code_context) || undefined;
+    const effectiveLanguage = detectedLang;
+    if (!aiResult.detected_language && detectedLang) {
+      aiResult.detected_language = detectedLang;
+    }
     const finalInput = {
       ...sanitizedInput,
       language: effectiveLanguage,
@@ -81,8 +86,17 @@ export async function reanalyzeHandler(req: AuthenticatedRequest, res: Response,
     const aiProvider = getAIProvider();
     const newAiResult = await aiProvider.analyzeError(inputData);
 
+    const detectedLang = inputData.language || newAiResult.detected_language || detectLanguage(inputData.error_text, inputData.code_context) || undefined;
+    const finalInputData = {
+      ...inputData,
+      language: detectedLang,
+    };
+    if (!newAiResult.detected_language && detectedLang) {
+      newAiResult.detected_language = detectedLang;
+    }
+
     // Save as new analysis entry
-    const savedRecord = HistoryRepository.saveAnalysis(inputData, newAiResult, userId);
+    const savedRecord = HistoryRepository.saveAnalysis(finalInputData, newAiResult, userId);
 
     res.status(200).json(savedRecord);
   } catch (error) {

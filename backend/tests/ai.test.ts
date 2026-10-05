@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { buildSystemPrompt, buildUserPrompt } from '../src/services/ai/prompt.js';
 import { parseAIResponse } from '../src/services/ai/parser.js';
 import { MockAIProvider } from '../src/services/ai/providers/mockProvider.js';
-import { getAIProvider } from '../src/services/ai/factory.js';
+import { getAIProvider, resetAIProviderCache } from '../src/services/ai/factory.js';
+import { env } from '../src/config/env.js';
 
 describe('AI Integration Service Suite', () => {
   it('buildSystemPrompt returns JSON schema enforcement constraints', () => {
@@ -91,7 +92,15 @@ describe('AI Integration Service Suite', () => {
   });
 
   it('getAIProvider returns default MockAIProvider when AI_PROVIDER=mock', () => {
-    const provider = getAIProvider();
-    expect(provider.name).toBe('mock');
+    const originalProvider = env.AI_PROVIDER;
+    try {
+      (env as any).AI_PROVIDER = 'mock';
+      resetAIProviderCache();
+      const provider = getAIProvider();
+      expect(provider.name).toBe('mock');
+    } finally {
+      (env as any).AI_PROVIDER = originalProvider;
+      resetAIProviderCache();
+    }
   });
 });

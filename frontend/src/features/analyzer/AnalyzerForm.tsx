@@ -2,23 +2,12 @@ import React, { useState } from 'react';
 import { AnalysisInput } from '../../types';
 import { SAMPLE_ERRORS, SUPPORTED_LANGUAGES, SUPPORTED_FRAMEWORKS, SUPPORTED_ENVIRONMENTS, SUPPORTED_OS } from '../../utils/samples';
 import { Sparkles, Code, ChevronDown, ChevronUp, RotateCcw, AlertCircle, Upload, FileText, X } from 'lucide-react';
+import { detectLanguage } from '../../utils/languageDetector';
 
 interface AnalyzerFormProps {
   onSubmit: (input: AnalysisInput) => void;
   isLoading: boolean;
 }
-
-const getQuickDetectedLanguage = (text: string): string | null => {
-  if (!text) return null;
-  if (/Traceback \(most recent call last\)|File ".*\.py"|KeyError:|IndentationError:|NameError:|ModuleNotFoundError:/i.test(text)) return 'Python';
-  if (/java\.lang\.|Exception in thread|NullPointerException|ClassNotFoundException|at .*\.java:\d+/i.test(text)) return 'Java';
-  if (/error\[E\d+\]|cargo build|cannot borrow .* as mutable/i.test(text)) return 'Rust';
-  if (/TypeError: Cannot read|ReferenceError:|SyntaxError: Unexpected token|at .*\.(js|ts|jsx|tsx):\d+/i.test(text)) return 'TypeScript / JS';
-  if (/panic: runtime error|goroutine \d+/i.test(text)) return 'Go';
-  if (/failed to solve with frontend dockerfile|Dockerfile:/i.test(text)) return 'Docker';
-  if (/syntax error at or near|ORA-\d+|psycopg2|sqlite3\.OperationalError/i.test(text)) return 'SQL';
-  return null;
-};
 
 export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading }) => {
   const [errorText, setErrorText] = useState(() => {
@@ -60,7 +49,7 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
   });
   const [validationError, setValidationError] = useState('');
 
-  const quickDetected = getQuickDetectedLanguage(errorText);
+  const quickDetected = detectLanguage(errorText, codeContext);
 
   // Sync draft to sessionStorage so navigating to History or About never loses pasted input
   React.useEffect(() => {

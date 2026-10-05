@@ -1,10 +1,12 @@
 import { AIProvider, AnalysisInput, AIAnalysisResult, ChatContext, ChatMessage } from '../types.js';
+import { detectLanguage } from '../../../utils/languageDetector.js';
 
 export class MockAIProvider implements AIProvider {
   public readonly name = 'mock';
 
   async analyzeError(input: AnalysisInput): Promise<AIAnalysisResult> {
     const errorText = input.error_text.toLowerCase().trim();
+    const detectedLanguage = input.language || detectLanguage(input.error_text, input.code_context) || undefined;
 
     // HTTP 200 OK / Success Status Detection
     if (
@@ -18,6 +20,7 @@ export class MockAIProvider implements AIProvider {
       return {
         error_type: 'HTTP 200 OK (Success Status - Not An Error)',
         severity: 'low',
+        detected_language: detectedLanguage,
         summary: 'The submitted input "200 OK" is an HTTP success status code, NOT a system crash or error failure.',
         explanation:
           'HTTP status code 200 OK indicates that the client request succeeded and the server responded normally without any system error or network fault.',
@@ -45,6 +48,7 @@ export class MockAIProvider implements AIProvider {
       return {
         error_type: 'Runtime Error',
         severity: 'medium',
+        detected_language: detectedLanguage || 'JavaScript',
         summary: 'The application attempted to access a property on an undefined or null value.',
         explanation:
           'In JavaScript/TypeScript, dereferencing a property on a variable that evaluates to undefined or null triggers a TypeError at runtime.',
@@ -77,6 +81,7 @@ export class MockAIProvider implements AIProvider {
       return {
         error_type: 'Syntax Error',
         severity: 'high',
+        detected_language: detectedLanguage,
         summary: 'The code parser encountered invalid language syntax.',
         explanation: 'Syntax errors occur when code breaks language grammar rules, such as missing brackets or quotes.',
         likely_cause: 'Missing closing parenthesis, curly brace, or unexpected character.',
@@ -99,6 +104,7 @@ export class MockAIProvider implements AIProvider {
       return {
         error_type: 'HTTP 404 Not Found Error',
         severity: 'medium',
+        detected_language: detectedLanguage,
         summary: 'The requested URL endpoint, API route, or web resource could not be found on the server.',
         explanation:
           'HTTP 404 Not Found indicates that the client successfully connected to the server, but the requested path or endpoint does not exist or has moved.',
@@ -135,6 +141,7 @@ export class MockAIProvider implements AIProvider {
       return {
         error_type: 'HTTP 500 Internal Server Error',
         severity: 'high',
+        detected_language: detectedLanguage,
         summary: 'The server encountered an unhandled exception or crash while processing your request.',
         explanation:
           'HTTP 500 indicates a server-side failure such as an uncaught exception, database connection error, or syntax crash on the backend.',
@@ -166,6 +173,7 @@ export class MockAIProvider implements AIProvider {
       return {
         error_type: 'CORS Policy Security Error',
         severity: 'high',
+        detected_language: detectedLanguage,
         summary: 'The browser blocked a cross-origin request because the server did not send matching CORS headers.',
         explanation:
           'Browsers enforce Same-Origin Policy (SOP). If your frontend domain makes requests to a different backend domain, the backend must return Access-Control-Allow-Origin headers.',
@@ -196,6 +204,7 @@ export class MockAIProvider implements AIProvider {
       return {
         error_type: 'Python KeyError (Missing Dictionary Key)',
         severity: 'medium',
+        detected_language: detectedLanguage || 'Python',
         summary: 'A dictionary key was accessed that does not exist in the dictionary payload.',
         explanation:
           'In Python, accessing a non-existent key using bracket notation dict["key"] raises a KeyError at runtime when the key is missing or nested payload structure is different than expected.',
@@ -229,6 +238,7 @@ export class MockAIProvider implements AIProvider {
       return {
         error_type: 'Rust Borrow Checker Violation (E0502)',
         severity: 'high',
+        detected_language: detectedLanguage || 'Rust',
         summary: 'Cannot borrow variable as mutable while an active immutable reference still exists.',
         explanation:
           'Rust enforces strict aliasing rules: you can have any number of immutable references (&T) OR exactly one mutable reference (&mut T), but not both simultaneously in overlapping scopes.',
@@ -258,6 +268,7 @@ export class MockAIProvider implements AIProvider {
       return {
         error_type: 'Docker Port Conflict Error',
         severity: 'medium',
+        detected_language: detectedLanguage || 'Docker',
         summary: 'Docker failed to bind container port because the host port is already occupied by another process.',
         explanation:
           'TCP ports can only be bound by a single listening process per network interface. The host port is already occupied by another running service.',
@@ -289,6 +300,7 @@ export class MockAIProvider implements AIProvider {
       return {
         error_type: 'PostgreSQL Unique Constraint Violation (23505)',
         severity: 'medium',
+        detected_language: detectedLanguage || 'SQL',
         summary: 'An INSERT or UPDATE query attempted to insert duplicate data into a UNIQUE indexed column.',
         explanation:
           'The database table schema enforces uniqueness on the specified column (such as email or username), and a matching record already exists.',
@@ -316,8 +328,9 @@ export class MockAIProvider implements AIProvider {
 
     // Generic fallback mock response
     return {
-      error_type: input.language ? `${input.language} Error` : 'Runtime Error',
+      error_type: detectedLanguage ? `${detectedLanguage} Error` : (input.language ? `${input.language} Error` : 'Runtime Error'),
       severity: 'medium',
+      detected_language: detectedLanguage,
       summary: `An error occurred while executing ${input.language || 'application'} code.`,
       explanation: 'The provided log indicates an unhandled runtime exception during execution.',
       likely_cause: 'State mismatch or unhandled exception path in execution.',

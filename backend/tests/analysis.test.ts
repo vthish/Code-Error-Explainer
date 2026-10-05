@@ -3,16 +3,24 @@ import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { runMigrations } from '../src/database/migrations.js';
 import { closeDatabase } from '../src/database/connection.js';
+import { env } from '../src/config/env.js';
+import { resetAIProviderCache } from '../src/services/ai/factory.js';
 
 describe('Error Analysis API Integration Suite', () => {
   let app: ReturnType<typeof createApp>;
+  let originalProvider: string;
 
   beforeAll(() => {
+    originalProvider = env.AI_PROVIDER;
+    (env as any).AI_PROVIDER = 'mock';
+    resetAIProviderCache();
     runMigrations();
     app = createApp();
   });
 
   afterAll(() => {
+    (env as any).AI_PROVIDER = originalProvider;
+    resetAIProviderCache();
     closeDatabase();
   });
 
