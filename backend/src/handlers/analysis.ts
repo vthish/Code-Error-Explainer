@@ -48,9 +48,7 @@ export async function analyzeErrorHandler(req: AuthenticatedRequest, res: Respon
     };
     const savedRecord = HistoryRepository.saveAnalysis(finalInput, aiResult, userId);
 
-    if (!res.headersSent && !req.destroyed && !req.socket?.destroyed) {
-      res.status(200).json(savedRecord);
-    }
+    res.status(200).json(savedRecord);
   } catch (error) {
     next(error);
   }

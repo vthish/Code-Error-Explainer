@@ -17,12 +17,29 @@ interface AnalysisContextType {
 const AnalysisContext = createContext<AnalysisContextType | undefined>(undefined);
 
 export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [record, setRecord] = useState<AnalysisRecordDTO | null>(null);
+  const [record, setRecord] = useState<AnalysisRecordDTO | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('draft_analysis_record');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [lastInput, setLastInput] = useState<AnalysisInput | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    try {
+      if (record) {
+        sessionStorage.setItem('draft_analysis_record', JSON.stringify(record));
+      } else {
+        sessionStorage.removeItem('draft_analysis_record');
+      }
+    } catch {}
+  }, [record]);
 
   const cancelAnalysis = () => {
     if (abortControllerRef.current) {
@@ -37,6 +54,9 @@ export const AnalysisProvider: React.FC<{ children: ReactNode }> = ({ children }
     setRecord(null);
     setErrorMessage('');
     setLastInput(null);
+    try {
+      sessionStorage.removeItem('draft_analysis_record');
+    } catch {}
   };
 
   useEffect(() => {

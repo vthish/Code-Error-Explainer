@@ -59,6 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sessionStorage.removeItem('draft_code_context');
       sessionStorage.removeItem('draft_language');
       sessionStorage.removeItem('draft_framework');
+      sessionStorage.removeItem('draft_analysis_record');
     } catch {}
     window.dispatchEvent(new CustomEvent('clear-analyzer'));
   };

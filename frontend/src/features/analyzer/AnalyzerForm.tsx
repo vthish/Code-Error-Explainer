@@ -158,6 +158,7 @@ export const AnalyzerForm: React.FC<AnalyzerFormProps> = ({ onSubmit, isLoading 
       sessionStorage.removeItem('draft_code_context');
       sessionStorage.removeItem('draft_language');
       sessionStorage.removeItem('draft_framework');
+      sessionStorage.removeItem('draft_analysis_record');
     } catch {}
     if (fileInputRef.current) fileInputRef.current.value = '';
     window.dispatchEvent(new CustomEvent('clear-analyzer'));
